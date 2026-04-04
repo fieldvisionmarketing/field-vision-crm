@@ -32,6 +32,7 @@
             --priority-high: #ef4444;
             --priority-mid: #f59e0b;
             --priority-low: #9ca3af;
+            --edit-highlight: rgba(0, 217, 255, 0.15);
         }
 
         body {
@@ -113,9 +114,25 @@
             cursor: not-allowed;
         }
 
+        .button.accent {
+            background-color: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .button.accent:hover {
+            background-color: #00b8d9;
+        }
+
         .last-updated {
             font-size: 0.85rem;
             color: var(--text-secondary);
+        }
+
+        .edit-indicator {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-left: 0.5rem;
         }
 
         .tabs {
@@ -291,18 +308,18 @@
         }
 
         th.sortable::after {
-            content: ' â';
+            content: ' \2195';
             font-size: 0.75rem;
             opacity: 0.5;
         }
 
         th.sorted-asc::after {
-            content: ' â';
+            content: ' \2191';
             opacity: 1;
         }
 
         th.sorted-desc::after {
-            content: ' â';
+            content: ' \2193';
             opacity: 1;
         }
 
@@ -310,6 +327,44 @@
             padding: 1rem;
             border-bottom: 1px solid var(--border);
             color: var(--text-primary);
+            position: relative;
+        }
+
+        td.editable:hover {
+            background-color: var(--edit-highlight);
+            cursor: text;
+        }
+
+        td.editing {
+            padding: 0.25rem;
+            background-color: var(--edit-highlight);
+        }
+
+        td.edited::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--accent);
+        }
+
+        .cell-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-primary);
+            border: 2px solid var(--accent);
+            border-radius: 0.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .cell-input:focus {
+            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
         }
 
         tbody tr {
@@ -381,7 +436,8 @@
             background-color: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 0.5rem;
-            max-width: 600px;
+            max-width: 700px;
+            width: 90%;
             max-height: 80vh;
             overflow-y: auto;
             padding: 2rem;
@@ -409,6 +465,12 @@
         .modal-title {
             font-size: 1.5rem;
             font-weight: 700;
+        }
+
+        .modal-header-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
         }
 
         .modal-close {
@@ -450,6 +512,77 @@
         .modal-value {
             color: var(--text-primary);
             word-break: break-word;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+        }
+
+        .modal-textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .edit-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+
+        .changes-bar {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--accent);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .changes-bar .changes-text {
+            color: var(--accent);
+        }
+
+        .changes-bar .changes-actions {
+            display: flex;
+            gap: 0.75rem;
         }
 
         .loading {
@@ -498,6 +631,25 @@
             opacity: 0.5;
         }
 
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: 0.5rem;
+            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            z-index: 2000;
+            animation: slideUp 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .toast.success {
+            border-color: var(--status-engaged);
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
@@ -538,6 +690,14 @@
         </div>
     </div>
 
+    <div id="changesBar" style="display:none" class="changes-bar">
+        <span class="changes-text" id="changesText"></span>
+        <div class="changes-actions">
+            <button class="button" onclick="clearAllEdits()">Discard All</button>
+            <button class="button accent" onclick="exportEdits()">Export Changes</button>
+        </div>
+    </div>
+
     <div class="tabs" id="tabs"></div>
 
     <div class="content" id="content">
@@ -551,9 +711,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="modalTitle"></div>
-                <button class="modal-close" id="modalClose">&times;</button>
+                <div class="modal-header-actions">
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
             </div>
             <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter" style="display:none">
+                <button class="button" id="modalCancel">Cancel</button>
+                <button class="button accent" id="modalSave">Save Changes</button>
+            </div>
         </div>
     </div>
 
@@ -617,6 +783,142 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         let currentSort = { column: null, direction: 'asc' };
         let currentFilters = { status: [], priority: [] };
         let searchQuery = '';
+        let localEdits = {}; // { tabId: { rowIndex: { field: newValue } } }
+        let editingCell = null;
+
+        // Load saved edits from localStorage
+        function loadEdits() {
+            try {
+                const saved = localStorage.getItem('fieldvision_crm_edits');
+                if (saved) localEdits = JSON.parse(saved);
+            } catch (e) {
+                console.warn('Could not load saved edits');
+            }
+        }
+
+        // Save edits to localStorage
+        function saveEdits() {
+            try {
+                localStorage.setItem('fieldvision_crm_edits', JSON.stringify(localEdits));
+            } catch (e) {
+                console.warn('Could not save edits');
+            }
+            updateChangesBar();
+        }
+
+        // Count total edits
+        function countEdits() {
+            let count = 0;
+            Object.values(localEdits).forEach(tabEdits => {
+                Object.values(tabEdits).forEach(rowEdits => {
+                    count += Object.keys(rowEdits).length;
+                });
+            });
+            return count;
+        }
+
+        // Update changes bar
+        function updateChangesBar() {
+            const bar = document.getElementById('changesBar');
+            const count = countEdits();
+            if (count > 0) {
+                bar.style.display = 'flex';
+                document.getElementById('changesText').textContent = `${count} local edit${count !== 1 ? 's' : ''} (changes saved locally)`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        // Clear all edits
+        function clearAllEdits() {
+            if (confirm('Discard all local edits? This cannot be undone.')) {
+                localEdits = {};
+                saveEdits();
+                renderContent();
+                showToast('All edits discarded');
+            }
+        }
+
+        // Export edits as summary
+        function exportEdits() {
+            let text = 'Field Vision CRM - Local Edits Summary\n';
+            text += '=' .repeat(50) + '\n\n';
+
+            Object.entries(localEdits).forEach(([tabId, tabEdits]) => {
+                const tabName = TABS.find(t => t.id === tabId)?.name || tabId;
+                const entries = Object.entries(tabEdits);
+                if (entries.length === 0) return;
+
+                text += `Tab: ${tabName}\n`;
+                text += '-'.repeat(30) + '\n';
+
+                entries.forEach(([rowIdx, fields]) => {
+                    const data = allData[tabId]?.[rowIdx];
+                    const primaryKey = data ? Object.keys(data)[0] : '';
+                    const rowName = data ? data[primaryKey] : `Row ${rowIdx}`;
+                    text += `  ${rowName}:\n`;
+                    Object.entries(fields).forEach(([field, value]) => {
+                        const original = data ? data[field] : '';
+                        text += `    ${field}: "${original}" -> "${value}"\n`;
+                    });
+                    text += '\n';
+                });
+                text += '\n';
+            });
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'crm_edits_' + new Date().toISOString().slice(0,10) + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Edits exported');
+        }
+
+        // Get effective value (with local edits applied)
+        function getEffectiveValue(tabId, rowIndex, field) {
+            if (localEdits[tabId]?.[rowIndex]?.[field] !== undefined) {
+                return localEdits[tabId][rowIndex][field];
+            }
+            return allData[tabId]?.[rowIndex]?.[field] || '';
+        }
+
+        // Check if a cell has been edited
+        function isEdited(tabId, rowIndex, field) {
+            return localEdits[tabId]?.[rowIndex]?.[field] !== undefined;
+        }
+
+        // Apply edit
+        function applyEdit(tabId, rowIndex, field, newValue) {
+            const originalValue = allData[tabId]?.[rowIndex]?.[field] || '';
+            if (newValue === originalValue) {
+                // Remove edit if it matches original
+                if (localEdits[tabId]?.[rowIndex]) {
+                    delete localEdits[tabId][rowIndex][field];
+                    if (Object.keys(localEdits[tabId][rowIndex]).length === 0) {
+                        delete localEdits[tabId][rowIndex];
+                    }
+                    if (Object.keys(localEdits[tabId]).length === 0) {
+                        delete localEdits[tabId];
+                    }
+                }
+            } else {
+                if (!localEdits[tabId]) localEdits[tabId] = {};
+                if (!localEdits[tabId][rowIndex]) localEdits[tabId][rowIndex] = {};
+                localEdits[tabId][rowIndex][field] = newValue;
+            }
+            saveEdits();
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
 
         // CSV Parser
         function parseCSV(csv) {
@@ -723,6 +1025,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             updateLastUpdated();
             renderTabs();
             renderContent();
+            updateChangesBar();
 
             if (hasError) {
                 showError('Some data failed to load. Showing fallback data.');
@@ -752,7 +1055,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             TABS.forEach(tab => {
                 const button = document.createElement('button');
                 button.className = `tab ${tab.id === currentTab ? 'active' : ''}`;
-                button.innerHTML = `${tab.name} <span class="tab-badge">${allData[tab.id]?.length || 0}</span>`;
+                const editCount = localEdits[tab.id] ? Object.keys(localEdits[tab.id]).length : 0;
+                const editIndicator = editCount > 0 ? ` <span class="edit-indicator">(${editCount} edited)</span>` : '';
+                button.innerHTML = `${tab.name} <span class="tab-badge">${allData[tab.id]?.length || 0}</span>${editIndicator}`;
                 button.onclick = () => {
                     currentTab = tab.id;
                     currentSort = { column: null, direction: 'asc' };
@@ -855,16 +1160,23 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             return metricsDiv;
         }
 
-        // Get filtered data
+        // Get filtered data (with edits applied)
         function getFilteredData() {
-            let data = allData[currentTab] || [];
+            let data = (allData[currentTab] || []).map((row, idx) => {
+                // Apply local edits
+                const edits = localEdits[currentTab]?.[idx];
+                if (edits) {
+                    return { ...row, ...edits, _originalIndex: idx };
+                }
+                return { ...row, _originalIndex: idx };
+            });
 
             // Apply search
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 data = data.filter(row =>
-                    Object.values(row).some(val =>
-                        (val || '').toString().toLowerCase().includes(query)
+                    Object.entries(row).some(([key, val]) =>
+                        key !== '_originalIndex' && (val || '').toString().toLowerCase().includes(query)
                     )
                 );
             }
@@ -974,15 +1286,76 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             return filtersDiv;
         }
 
+        // Start inline cell edit
+        function startCellEdit(td, tabId, rowIndex, header, currentValue) {
+            if (editingCell) {
+                // Save previous edit first
+                finishCellEdit();
+            }
+
+            editingCell = { td, tabId, rowIndex, header };
+            td.classList.add('editing');
+            td.innerHTML = '';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'cell-input';
+            input.value = currentValue;
+
+            input.addEventListener('blur', () => {
+                finishCellEdit(input.value);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finishCellEdit(input.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finishCellEdit(); // Cancel - don't save
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    finishCellEdit(input.value);
+                    // Move to next cell
+                    const nextTd = e.shiftKey ? td.previousElementSibling : td.nextElementSibling;
+                    if (nextTd && nextTd.dataset.header) {
+                        const nextRow = parseInt(nextTd.dataset.rowIndex);
+                        const nextHeader = nextTd.dataset.header;
+                        const nextValue = getEffectiveValue(tabId, nextRow, nextHeader);
+                        startCellEdit(nextTd, tabId, nextRow, nextHeader, nextValue);
+                    }
+                }
+            });
+
+            td.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        // Finish inline cell edit
+        function finishCellEdit(newValue) {
+            if (!editingCell) return;
+
+            const { td, tabId, rowIndex, header } = editingCell;
+            editingCell = null;
+
+            if (newValue !== undefined) {
+                applyEdit(tabId, rowIndex, header, newValue);
+            }
+
+            // Re-render the content
+            renderContent();
+        }
+
         // Render table
         function renderTable() {
             const data = getFilteredData();
-            const headers = data.length > 0 ? Object.keys(data[0]) : [];
+            const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex') : [];
 
             if (data.length === 0) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'empty-state';
-                emptyDiv.innerHTML = '<div class="empty-state-icon">ð­</div><div>No contacts match your filters</div>';
+                emptyDiv.innerHTML = '<div class="empty-state-icon">&#x1F4ED;</div><div>No contacts match your filters</div>';
                 return emptyDiv;
             }
 
@@ -1019,13 +1392,21 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             table.appendChild(thead);
 
             const tbody = document.createElement('tbody');
-            data.forEach((row, rowIndex) => {
+            data.forEach((row, displayIndex) => {
+                const originalIndex = row._originalIndex;
                 const tr = document.createElement('tr');
-                tr.onclick = () => showDetail(row);
 
                 headers.forEach(header => {
                     const td = document.createElement('td');
+                    td.classList.add('editable');
+                    td.dataset.rowIndex = originalIndex;
+                    td.dataset.header = header;
                     let value = row[header] || '';
+
+                    // Mark edited cells
+                    if (isEdited(currentTab, originalIndex, header)) {
+                        td.classList.add('edited');
+                    }
 
                     // Format status badges
                     if (header === 'Phase' || header === 'Status') {
@@ -1053,8 +1434,8 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                             'Mid': '#f59e0b',
                             'Low': '#9ca3af'
                         };
-                        badge.style.backgroundColor = colorMap[value] + '20';
-                        badge.style.color = colorMap[value];
+                        badge.style.backgroundColor = (colorMap[value] || '#6b7280') + '20';
+                        badge.style.color = colorMap[value] || '#6b7280';
                         badge.textContent = value;
                         td.appendChild(badge);
                     }
@@ -1096,6 +1477,19 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                         td.textContent = value;
                     }
 
+                    // Single click opens detail modal
+                    td.addEventListener('click', (e) => {
+                        if (editingCell) return; // Don't open modal while editing
+                        showDetail(row, originalIndex);
+                    });
+
+                    // Double click starts inline edit
+                    td.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startCellEdit(td, currentTab, originalIndex, header, value);
+                    });
+
                     tr.appendChild(td);
                 });
 
@@ -1107,56 +1501,83 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             return containerDiv;
         }
 
-        // Show detail modal
-        function showDetail(row) {
+        // Show detail modal (editable)
+        function showDetail(row, originalIndex) {
             const modal = document.getElementById('detailModal');
             const modalBody = document.getElementById('modalBody');
             const modalTitle = document.getElementById('modalTitle');
+            const modalFooter = document.getElementById('modalFooter');
 
-            const primaryKey = Object.keys(row)[0];
+            const primaryKey = Object.keys(row).filter(k => k !== '_originalIndex')[0];
             modalTitle.textContent = row[primaryKey] || 'Contact Details';
 
             modalBody.innerHTML = '';
+            const longFields = ['Notes', 'Summary', 'Next Step', 'Next Contact Date'];
+
             Object.entries(row).forEach(([key, value]) => {
+                if (key === '_originalIndex') return;
+
                 const field = document.createElement('div');
                 field.className = 'modal-field';
-                if (!value || value === '') {
-                    field.style.opacity = '0.5';
+                if (longFields.includes(key) || key.includes('Notes') || key.includes('Summary')) {
+                    field.classList.add('full');
                 }
 
                 const label = document.createElement('div');
                 label.className = 'modal-label';
                 label.textContent = key;
-
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'modal-value';
-
-                // Format value
-                if (key.includes('Email') && value.includes('@')) {
-                    const link = document.createElement('a');
-                    link.href = `mailto:${value}`;
-                    link.textContent = value;
-                    valueDiv.appendChild(link);
-                } else if (key === 'LinkedIn' && value && value.includes('linkedin')) {
-                    const link = document.createElement('a');
-                    link.href = value;
-                    link.target = '_blank';
-                    link.textContent = 'View LinkedIn Profile';
-                    valueDiv.appendChild(link);
-                } else if (key === 'Link' && value) {
-                    const link = document.createElement('a');
-                    link.href = value.startsWith('http') ? value : `https://${value}`;
-                    link.target = '_blank';
-                    link.textContent = value;
-                    valueDiv.appendChild(link);
-                } else {
-                    valueDiv.textContent = value || '';
+                if (isEdited(currentTab, originalIndex, key)) {
+                    label.innerHTML += ' <span class="edit-indicator">(edited)</span>';
                 }
 
+                // Create editable input
+                const isLong = longFields.includes(key) || key.includes('Notes') || key.includes('Summary');
+                let input;
+                if (isLong) {
+                    input = document.createElement('textarea');
+                    input.className = 'modal-textarea';
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'modal-input';
+                }
+                input.value = value || '';
+                input.dataset.field = key;
+                input.dataset.rowIndex = originalIndex;
+
                 field.appendChild(label);
-                field.appendChild(valueDiv);
+                field.appendChild(input);
                 modalBody.appendChild(field);
             });
+
+            // Show footer with save/cancel
+            modalFooter.style.display = 'flex';
+
+            // Save handler
+            document.getElementById('modalSave').onclick = () => {
+                const inputs = modalBody.querySelectorAll('.modal-input, .modal-textarea');
+                let changesMade = 0;
+                inputs.forEach(inp => {
+                    const field = inp.dataset.field;
+                    const rowIdx = parseInt(inp.dataset.rowIndex);
+                    const newValue = inp.value;
+                    const originalValue = allData[currentTab]?.[rowIdx]?.[field] || '';
+                    if (newValue !== originalValue) {
+                        applyEdit(currentTab, rowIdx, field, newValue);
+                        changesMade++;
+                    }
+                });
+                closeModal();
+                renderContent();
+                renderTabs();
+                if (changesMade > 0) {
+                    showToast(`${changesMade} field${changesMade !== 1 ? 's' : ''} updated`);
+                }
+            };
+
+            document.getElementById('modalCancel').onclick = () => {
+                closeModal();
+            };
 
             modal.classList.add('open');
         }
@@ -1170,6 +1591,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         function renderContent() {
             const content = document.getElementById('content');
             content.innerHTML = '';
+
+            // Edit hint
+            const hint = document.createElement('div');
+            hint.className = 'edit-hint';
+            hint.textContent = 'Double-click any cell to edit inline. Click a row to open the detail editor.';
+            content.appendChild(hint);
 
             const metricsDiv = renderMetrics();
             content.appendChild(metricsDiv);
@@ -1202,6 +1629,15 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // Don't trigger shortcuts when editing
+            if (editingCell || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                if (e.key === 'Escape') {
+                    if (editingCell) finishCellEdit();
+                    closeModal();
+                }
+                return;
+            }
+
             if (e.key === '/') {
                 e.preventDefault();
                 document.getElementById('globalSearch').focus();
@@ -1222,6 +1658,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         });
 
         // Initialize
+        loadEdits();
         fetchData();
     </script>
 </body>
