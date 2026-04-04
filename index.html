@@ -1477,16 +1477,22 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                         td.textContent = value;
                     }
 
-                    // Single click opens detail modal
+                    // Use timeout to distinguish single click (modal) from double click (edit)
+                    let clickTimer = null;
                     td.addEventListener('click', (e) => {
-                        if (editingCell) return; // Don't open modal while editing
-                        showDetail(row, originalIndex);
+                        if (editingCell) return;
+                        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+                        clickTimer = setTimeout(() => {
+                            clickTimer = null;
+                            showDetail(row, originalIndex);
+                        }, 250);
                     });
 
                     // Double click starts inline edit
                     td.addEventListener('dblclick', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
                         startCellEdit(td, currentTab, originalIndex, header, value);
                     });
 
