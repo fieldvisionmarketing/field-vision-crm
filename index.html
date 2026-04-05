@@ -2930,7 +2930,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
 
             const tableDiv = renderTable();
-            content.appendChild(tableDiv);
+            if (tableDiv) content.appendChild(tableDiv);
         }
 
         // Event listeners
