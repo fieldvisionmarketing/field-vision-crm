@@ -12,13 +12,17 @@
         }
 
         :root {
-            --bg-primary: #0f1419;
-            --bg-secondary: #1a2332;
-            --bg-tertiary: #2a3f59;
-            --text-primary: #e8eef7;
-            --text-secondary: #a8b5c7;
-            --border: #3d4f63;
-            --accent: #00d9ff;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7f5ed;
+            --bg-tertiary: #efead3;
+            --text-primary: #213621;
+            --text-secondary: #5a6e5a;
+            --border: #d4d0c0;
+            --accent: #213621;
+            --accent-green: #a5db5d;
+            --accent-hover: #2d4a2d;
+            --tan: #b9a98f;
+            --light-cream: #f9efdc;
             --status-active: #10b981;
             --status-engaged: #10b981;
             --status-won: #10b981;
@@ -32,7 +36,7 @@
             --priority-high: #ef4444;
             --priority-mid: #f59e0b;
             --priority-low: #9ca3af;
-            --edit-highlight: rgba(0, 217, 255, 0.15);
+            --edit-highlight: rgba(165, 219, 93, 0.15);
         }
 
         body {
@@ -43,7 +47,7 @@
         }
 
         .header {
-            background-color: var(--bg-secondary);
+            background-color: var(--accent);
             border-bottom: 1px solid var(--border);
             padding: 1.5rem 2rem;
             display: flex;
@@ -57,7 +61,7 @@
             font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: 0.05em;
-            color: var(--accent);
+            color: #ffffff;
         }
 
         .header-controls {
@@ -75,26 +79,27 @@
         .search-input {
             width: 100%;
             padding: 0.75rem 1rem;
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border);
+            background-color: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
             border-radius: 0.5rem;
-            color: var(--text-primary);
+            color: #ffffff;
             font-size: 0.9rem;
         }
 
         .search-input::placeholder {
-            color: var(--text-secondary);
+            color: rgba(255,255,255,0.6);
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.3);
+            background-color: rgba(255,255,255,0.25);
         }
 
         .button {
             padding: 0.75rem 1.25rem;
-            background-color: var(--bg-tertiary);
+            background-color: var(--bg-secondary);
             border: 1px solid var(--border);
             color: var(--text-primary);
             border-radius: 0.5rem;
@@ -105,7 +110,7 @@
 
         .button:hover {
             background-color: var(--accent);
-            color: var(--bg-primary);
+            color: #ffffff;
             border-color: var(--accent);
         }
 
@@ -116,22 +121,34 @@
 
         .button.accent {
             background-color: var(--accent);
-            color: var(--bg-primary);
+            color: #ffffff;
             border-color: var(--accent);
         }
 
         .button.accent:hover {
-            background-color: #00b8d9;
+            background-color: var(--accent-hover);
+        }
+
+        .header .button {
+            background-color: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            color: #ffffff;
+        }
+
+        .header .button:hover {
+            background-color: var(--accent-green);
+            color: var(--accent);
+            border-color: var(--accent-green);
         }
 
         .last-updated {
             font-size: 0.85rem;
-            color: var(--text-secondary);
+            color: rgba(255,255,255,0.7);
         }
 
         .edit-indicator {
             font-size: 0.75rem;
-            color: var(--accent);
+            color: var(--accent-green);
             margin-left: 0.5rem;
         }
 
@@ -163,7 +180,7 @@
 
         .tab.active {
             color: var(--accent);
-            border-bottom-color: var(--accent);
+            border-bottom-color: var(--accent-green);
         }
 
         .tab-badge {
@@ -253,7 +270,7 @@
 
         .filter-chip {
             padding: 0.5rem 1rem;
-            background-color: var(--bg-tertiary);
+            background-color: var(--bg-secondary);
             border: 1px solid var(--border);
             color: var(--text-primary);
             border-radius: 2rem;
@@ -263,13 +280,13 @@
         }
 
         .filter-chip:hover {
-            background-color: var(--bg-tertiary);
             border-color: var(--accent);
+            background-color: var(--bg-tertiary);
         }
 
         .filter-chip.active {
             background-color: var(--accent);
-            color: var(--bg-primary);
+            color: #ffffff;
             border-color: var(--accent);
         }
 
@@ -277,7 +294,7 @@
             overflow-x: auto;
             border: 1px solid var(--border);
             border-radius: 0.5rem;
-            background-color: var(--bg-secondary);
+            background-color: var(--bg-primary);
         }
 
         table {
@@ -348,14 +365,14 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background-color: var(--accent);
+            background-color: var(--accent-green);
         }
 
         .cell-input {
             width: 100%;
             padding: 0.5rem 0.75rem;
             background-color: var(--bg-primary);
-            border: 2px solid var(--accent);
+            border: 2px solid var(--accent-green);
             border-radius: 0.25rem;
             color: var(--text-primary);
             font-size: 0.9rem;
@@ -364,7 +381,24 @@
         }
 
         .cell-input:focus {
-            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.3);
+        }
+
+        .cell-select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background-color: var(--bg-primary);
+            border: 2px solid var(--accent-green);
+            border-radius: 0.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .cell-select:focus {
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.3);
         }
 
         tbody tr {
@@ -373,7 +407,11 @@
         }
 
         tbody tr:hover {
-            background-color: var(--bg-tertiary);
+            background-color: var(--bg-secondary);
+        }
+
+        tbody tr.row-hidden {
+            display: none;
         }
 
         .status-badge {
@@ -405,6 +443,97 @@
             text-decoration: underline;
         }
 
+        /* Hide/Show row controls */
+        .hide-row-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .hide-row-btn:hover {
+            background: var(--status-lost);
+            color: #fff;
+            border-color: var(--status-lost);
+        }
+
+        .hidden-rows-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.6rem 1rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: fit-content;
+        }
+
+        .hidden-rows-toggle:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .hidden-rows-toggle .toggle-icon {
+            transition: transform 0.2s;
+        }
+
+        .hidden-rows-toggle.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .hidden-row-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        .hidden-row-item .restore-btn {
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-green);
+            color: var(--accent);
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .hidden-row-item .restore-btn:hover {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        .hidden-rows-panel {
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        .hidden-rows-panel.expanded {
+            display: block;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -412,7 +541,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(33, 54, 33, 0.5);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -433,7 +562,7 @@
         }
 
         .modal-content {
-            background-color: var(--bg-secondary);
+            background-color: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 0.5rem;
             max-width: 700px;
@@ -442,6 +571,7 @@
             overflow-y: auto;
             padding: 2rem;
             animation: slideUp 0.2s;
+            box-shadow: 0 8px 32px rgba(33, 54, 33, 0.2);
         }
 
         @keyframes slideUp {
@@ -483,7 +613,7 @@
         }
 
         .modal-close:hover {
-            color: var(--accent);
+            color: var(--status-lost);
         }
 
         .modal-body {
@@ -514,7 +644,7 @@
             word-break: break-word;
         }
 
-        .modal-input {
+        .modal-input, .modal-select {
             width: 100%;
             padding: 0.5rem 0.75rem;
             background-color: var(--bg-primary);
@@ -525,10 +655,10 @@
             font-family: inherit;
         }
 
-        .modal-input:focus {
+        .modal-input:focus, .modal-select:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.2);
         }
 
         .modal-textarea {
@@ -546,8 +676,8 @@
 
         .modal-textarea:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.2);
         }
 
         .modal-footer {
@@ -568,7 +698,7 @@
 
         .changes-bar {
             background-color: var(--bg-secondary);
-            border-bottom: 1px solid var(--accent);
+            border-bottom: 1px solid var(--accent-green);
             padding: 0.75rem 2rem;
             display: flex;
             justify-content: space-between;
@@ -578,6 +708,7 @@
 
         .changes-bar .changes-text {
             color: var(--accent);
+            font-weight: 500;
         }
 
         .changes-bar .changes-actions {
@@ -611,12 +742,12 @@
         }
 
         .error {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(239, 68, 68, 0.08);
             border: 1px solid var(--status-lost);
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin-bottom: 2rem;
-            color: #fca5a5;
+            color: #b91c1c;
         }
 
         .empty-state {
@@ -635,19 +766,20 @@
             position: fixed;
             bottom: 2rem;
             right: 2rem;
-            background-color: var(--bg-secondary);
+            background-color: var(--accent);
             border: 1px solid var(--accent);
             border-radius: 0.5rem;
             padding: 1rem 1.5rem;
-            color: var(--text-primary);
+            color: #ffffff;
             font-size: 0.9rem;
             z-index: 2000;
             animation: slideUp 0.3s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(33, 54, 33, 0.2);
         }
 
         .toast.success {
-            border-color: var(--status-engaged);
+            border-color: var(--accent-green);
+            background-color: var(--accent);
         }
 
         @media (max-width: 768px) {
@@ -778,6 +910,23 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             { id: 'berkeley', name: 'Berkeley', source: 'berkeley', headerRow: 1, titleRow: 0 }
         ];
 
+        // Dropdown options for specific columns
+        const DROPDOWN_OPTIONS = {
+            sales: {
+                'Phase': ['Proposal', 'Refinement', 'Contracting', 'Closed Won', 'Closed/Lost', 'Paused'],
+                'Priority': ['Low', 'Mid', 'High']
+            },
+            bd: {
+                'Status': ['Initial Outreach', 'New Prospect', 'Engaged', 'Needs Follow Up', 'Meeting Scheduled', 'Deprecated/Purgatory'],
+                'Priority': ['Low', 'Mid', 'High']
+            }
+        };
+
+        // Check if a column should use a dropdown
+        function getDropdownOptions(tabId, header) {
+            return DROPDOWN_OPTIONS[tabId]?.[header] || null;
+        }
+
         let allData = {};
         let currentTab = 'sales';
         let currentSort = { column: null, direction: 'asc' };
@@ -785,6 +934,8 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         let searchQuery = '';
         let localEdits = {}; // { tabId: { rowIndex: { field: newValue } } }
         let editingCell = null;
+        let hiddenRows = {}; // { tabId: Set of originalIndex }
+        let showHiddenRows = false;
 
         // Load saved edits from localStorage
         function loadEdits() {
@@ -794,6 +945,64 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             } catch (e) {
                 console.warn('Could not load saved edits');
             }
+        }
+
+        // Load hidden rows from localStorage
+        function loadHiddenRows() {
+            try {
+                const saved = localStorage.getItem('fieldvision_crm_hidden');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    Object.entries(parsed).forEach(([tabId, indices]) => {
+                        hiddenRows[tabId] = new Set(indices);
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not load hidden rows');
+            }
+        }
+
+        // Save hidden rows to localStorage
+        function saveHiddenRows() {
+            try {
+                const serializable = {};
+                Object.entries(hiddenRows).forEach(([tabId, set]) => {
+                    serializable[tabId] = [...set];
+                });
+                localStorage.setItem('fieldvision_crm_hidden', JSON.stringify(serializable));
+            } catch (e) {
+                console.warn('Could not save hidden rows');
+            }
+        }
+
+        // Hide a row
+        function hideRow(tabId, originalIndex) {
+            if (!hiddenRows[tabId]) hiddenRows[tabId] = new Set();
+            hiddenRows[tabId].add(originalIndex);
+            saveHiddenRows();
+            renderContent();
+            showToast('Row hidden');
+        }
+
+        // Restore a hidden row
+        function restoreRow(tabId, originalIndex) {
+            if (hiddenRows[tabId]) {
+                hiddenRows[tabId].delete(originalIndex);
+                if (hiddenRows[tabId].size === 0) delete hiddenRows[tabId];
+            }
+            saveHiddenRows();
+            renderContent();
+            showToast('Row restored');
+        }
+
+        // Get hidden row count for current tab
+        function getHiddenCount() {
+            return hiddenRows[currentTab]?.size || 0;
+        }
+
+        // Check if row is hidden
+        function isRowHidden(tabId, originalIndex) {
+            return hiddenRows[tabId]?.has(originalIndex) || false;
         }
 
         // Save edits to localStorage
@@ -1063,6 +1272,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     currentSort = { column: null, direction: 'asc' };
                     currentFilters = { status: [], priority: [] };
                     searchQuery = '';
+                    showHiddenRows = false;
                     document.getElementById('globalSearch').value = '';
                     renderTabs();
                     renderContent();
@@ -1095,12 +1305,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 if (lower.includes('won')) return 'green';
                 if (lower.includes('lost')) return 'red';
                 if (lower.includes('paused')) return 'gray';
-                if (lower.includes('refinement') || lower.includes('proposal')) return 'blue';
+                if (lower.includes('refinement') || lower.includes('proposal') || lower.includes('contracting')) return 'blue';
             } else if (tabId === 'bd') {
                 if (lower.includes('engaged')) return 'green';
                 if (lower.includes('follow')) return 'yellow';
-                if (lower.includes('initial')) return 'blue';
-                if (lower.includes('purgatory')) return 'red';
+                if (lower.includes('initial') || lower.includes('new prospect') || lower.includes('meeting')) return 'blue';
+                if (lower.includes('purgatory') || lower.includes('deprecated')) return 'red';
             }
             return 'gray';
         }
@@ -1170,6 +1380,11 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 }
                 return { ...row, _originalIndex: idx };
             });
+
+            // Filter out hidden rows (unless showing them)
+            if (!showHiddenRows) {
+                data = data.filter(row => !isRowHidden(currentTab, row._originalIndex));
+            }
 
             // Apply search
             if (searchQuery) {
@@ -1297,39 +1512,85 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             td.classList.add('editing');
             td.innerHTML = '';
 
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'cell-input';
-            input.value = currentValue;
+            const options = getDropdownOptions(tabId, header);
 
-            input.addEventListener('blur', () => {
-                finishCellEdit(input.value);
-            });
+            if (options) {
+                // Create dropdown select
+                const select = document.createElement('select');
+                select.className = 'cell-select';
 
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    finishCellEdit(input.value);
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    finishCellEdit(); // Cancel - don't save
-                } else if (e.key === 'Tab') {
-                    e.preventDefault();
-                    finishCellEdit(input.value);
-                    // Move to next cell
-                    const nextTd = e.shiftKey ? td.previousElementSibling : td.nextElementSibling;
-                    if (nextTd && nextTd.dataset.header) {
-                        const nextRow = parseInt(nextTd.dataset.rowIndex);
-                        const nextHeader = nextTd.dataset.header;
-                        const nextValue = getEffectiveValue(tabId, nextRow, nextHeader);
-                        startCellEdit(nextTd, tabId, nextRow, nextHeader, nextValue);
+                // Add empty option
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = '-- Select --';
+                select.appendChild(emptyOpt);
+
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    if (opt === currentValue || currentValue.includes(opt)) {
+                        option.selected = true;
                     }
-                }
-            });
+                    select.appendChild(option);
+                });
 
-            td.appendChild(input);
-            input.focus();
-            input.select();
+                select.addEventListener('change', () => {
+                    finishCellEdit(select.value);
+                });
+
+                select.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        finishCellEdit(); // Cancel
+                    }
+                });
+
+                select.addEventListener('blur', () => {
+                    // Small delay to allow change event to fire first
+                    setTimeout(() => {
+                        if (editingCell) finishCellEdit(select.value);
+                    }, 100);
+                });
+
+                td.appendChild(select);
+                select.focus();
+            } else {
+                // Create text input (original behavior)
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'cell-input';
+                input.value = currentValue;
+
+                input.addEventListener('blur', () => {
+                    finishCellEdit(input.value);
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        finishCellEdit(input.value);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        finishCellEdit(); // Cancel - don't save
+                    } else if (e.key === 'Tab') {
+                        e.preventDefault();
+                        finishCellEdit(input.value);
+                        // Move to next cell
+                        const nextTd = e.shiftKey ? td.previousElementSibling : td.nextElementSibling;
+                        if (nextTd && nextTd.dataset.header) {
+                            const nextRow = parseInt(nextTd.dataset.rowIndex);
+                            const nextHeader = nextTd.dataset.header;
+                            const nextValue = getEffectiveValue(tabId, nextRow, nextHeader);
+                            startCellEdit(nextTd, tabId, nextRow, nextHeader, nextValue);
+                        }
+                    }
+                });
+
+                td.appendChild(input);
+                input.focus();
+                input.select();
+            }
         }
 
         // Finish inline cell edit
@@ -1363,13 +1624,24 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             containerDiv.className = 'table-container';
 
             const table = document.createElement('table');
+
+            // Thead
             const thead = document.createElement('thead');
             const headerRow = document.createElement('tr');
 
+            // Add hide column header
+            const hideHeader = document.createElement('th');
+            hideHeader.style.width = '40px';
+            hideHeader.style.textAlign = 'center';
+            hideHeader.style.cursor = 'default';
+            hideHeader.innerHTML = '&#128065;'; // eye icon
+            hideHeader.title = 'Hide/Show rows';
+            headerRow.appendChild(hideHeader);
+
             headers.forEach(header => {
                 const th = document.createElement('th');
-                th.className = 'sortable';
                 th.textContent = header;
+                th.classList.add('sortable');
 
                 if (currentSort.column === header) {
                     th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
@@ -1379,8 +1651,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     if (currentSort.column === header) {
                         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
                     } else {
-                        currentSort.column = header;
-                        currentSort.direction = 'asc';
+                        currentSort = { column: header, direction: 'asc' };
                     }
                     renderContent();
                 };
@@ -1391,10 +1662,29 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
+            // Tbody
             const tbody = document.createElement('tbody');
+
             data.forEach((row, displayIndex) => {
                 const originalIndex = row._originalIndex;
+                const hidden = isRowHidden(currentTab, originalIndex);
                 const tr = document.createElement('tr');
+                if (hidden) tr.classList.add('row-hidden');
+
+                // Hide button cell
+                const hideTd = document.createElement('td');
+                hideTd.style.textAlign = 'center';
+                hideTd.style.padding = '0.5rem';
+                const hideBtn = document.createElement('button');
+                hideBtn.className = 'hide-row-btn';
+                hideBtn.innerHTML = '&times;';
+                hideBtn.title = 'Hide this row';
+                hideBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hideRow(currentTab, originalIndex);
+                });
+                hideTd.appendChild(hideBtn);
+                tr.appendChild(hideTd);
 
                 headers.forEach(header => {
                     const td = document.createElement('td');
@@ -1536,18 +1826,48 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     label.innerHTML += ' <span class="edit-indicator">(edited)</span>';
                 }
 
-                // Create editable input
-                const isLong = longFields.includes(key) || key.includes('Notes') || key.includes('Summary');
+                // Check if this field should be a dropdown
+                const dropdownOpts = getDropdownOptions(currentTab, key);
+
                 let input;
-                if (isLong) {
-                    input = document.createElement('textarea');
-                    input.className = 'modal-textarea';
+                if (dropdownOpts) {
+                    // Create select dropdown in modal
+                    input = document.createElement('select');
+                    input.className = 'modal-select';
+
+                    const emptyOpt = document.createElement('option');
+                    emptyOpt.value = '';
+                    emptyOpt.textContent = '-- Select --';
+                    input.appendChild(emptyOpt);
+
+                    dropdownOpts.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        if (opt === value || (value && value.includes(opt))) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
                 } else {
-                    input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'modal-input';
+                    // Create editable input
+                    const isLong = longFields.includes(key) || key.includes('Notes') || key.includes('Summary');
+                    if (isLong) {
+                        input = document.createElement('textarea');
+                        input.className = 'modal-textarea';
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'modal-input';
+                    }
+                    input.value = value || '';
                 }
-                input.value = value || '';
+
+                if (input.tagName === 'SELECT') {
+                    // value is already set via selected
+                } else {
+                    input.value = value || '';
+                }
                 input.dataset.field = key;
                 input.dataset.rowIndex = originalIndex;
 
@@ -1561,7 +1881,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
             // Save handler
             document.getElementById('modalSave').onclick = () => {
-                const inputs = modalBody.querySelectorAll('.modal-input, .modal-textarea');
+                const inputs = modalBody.querySelectorAll('.modal-input, .modal-textarea, .modal-select');
                 let changesMade = 0;
                 inputs.forEach(inp => {
                     const field = inp.dataset.field;
@@ -1593,6 +1913,58 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             document.getElementById('detailModal').classList.remove('open');
         }
 
+        // Render hidden rows panel
+        function renderHiddenRowsPanel() {
+            const count = getHiddenCount();
+            if (count === 0) return null;
+
+            const wrapper = document.createElement('div');
+
+            // Toggle button
+            const toggle = document.createElement('button');
+            toggle.className = `hidden-rows-toggle ${showHiddenRows ? 'expanded' : ''}`;
+            toggle.innerHTML = `<span class="toggle-icon">&#9654;</span> ${count} hidden row${count !== 1 ? 's' : ''}`;
+            toggle.onclick = () => {
+                showHiddenRows = !showHiddenRows;
+                renderContent();
+            };
+            wrapper.appendChild(toggle);
+
+            // Panel with hidden row items
+            if (showHiddenRows) {
+                const panel = document.createElement('div');
+                panel.className = 'hidden-rows-panel expanded';
+
+                const hiddenIndices = [...(hiddenRows[currentTab] || [])];
+                hiddenIndices.forEach(idx => {
+                    const row = allData[currentTab]?.[idx];
+                    if (!row) return;
+
+                    const primaryKey = Object.keys(row)[0];
+                    const name = row[primaryKey] || `Row ${idx}`;
+
+                    const item = document.createElement('div');
+                    item.className = 'hidden-row-item';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = name;
+
+                    const restoreBtn = document.createElement('button');
+                    restoreBtn.className = 'restore-btn';
+                    restoreBtn.textContent = 'Restore';
+                    restoreBtn.onclick = () => restoreRow(currentTab, idx);
+
+                    item.appendChild(nameSpan);
+                    item.appendChild(restoreBtn);
+                    panel.appendChild(item);
+                });
+
+                wrapper.appendChild(panel);
+            }
+
+            return wrapper;
+        }
+
         // Render content
         function renderContent() {
             const content = document.getElementById('content');
@@ -1610,6 +1982,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             const filtersDiv = renderFilters();
             if (filtersDiv.children.length > 0) {
                 content.appendChild(filtersDiv);
+            }
+
+            // Hidden rows panel
+            const hiddenPanel = renderHiddenRowsPanel();
+            if (hiddenPanel) {
+                content.appendChild(hiddenPanel);
             }
 
             const tableDiv = renderTable();
@@ -1636,7 +2014,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             // Don't trigger shortcuts when editing
-            if (editingCell || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if (editingCell || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
                 if (e.key === 'Escape') {
                     if (editingCell) finishCellEdit();
                     closeModal();
@@ -1656,6 +2034,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     currentSort = { column: null, direction: 'asc' };
                     currentFilters = { status: [], priority: [] };
                     searchQuery = '';
+                    showHiddenRows = false;
                     document.getElementById('globalSearch').value = '';
                     renderTabs();
                     renderContent();
@@ -1665,6 +2044,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         // Initialize
         loadEdits();
+        loadHiddenRows();
         fetchData();
     </script>
 </body>
