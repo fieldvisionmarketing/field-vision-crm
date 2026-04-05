@@ -3073,6 +3073,28 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
             h += '</div>';
             container.innerHTML = h;
+
+            // Attach dblclick edit handlers to Protemoi tier table cells
+            const protemoCols = ['Name', 'PROTEMOI Company', 'Industry', 'Phase', 'Next Step', 'Follow-Up Date', 'Notes'];
+            container.querySelectorAll('.contact-row').forEach(tr => {
+                const origIdx = parseInt(tr.getAttribute('data-idx'));
+                const tds = tr.querySelectorAll('td');
+                tds.forEach((td, colIdx) => {
+                    if (colIdx >= protemoCols.length) return;
+                    const header = protemoCols[colIdx];
+                    let clickTimer = null;
+                    td.addEventListener('click', (e) => {
+                        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+                        clickTimer = setTimeout(() => { clickTimer = null; }, 250);
+                    });
+                    td.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+                        startCellEdit(td, currentTab, origIdx, header, td.textContent);
+                    });
+                });
+            });
         }
 
         function toggleTierCollapse(el) {
