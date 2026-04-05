@@ -808,7 +808,32 @@
                 font-size: 0.8rem;
             }
         }
-    </style>
+    
+        /* Protemoi Tier Grouping */
+        .protemoi-container { padding: 20px 0; }
+        .tier-section { margin-bottom: 24px; border-radius: 4px; overflow: hidden; background: #fff; border: 1px solid #e8e3d6; }
+        .tier-header { background-color: #4a5d23; color: #f5f0e1; padding: 14px 18px; font-weight: 600; font-size: 15px; cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; transition: background-color 0.2s; }
+        .tier-header:hover { background-color: #556b2f; }
+        .tier-header-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .tier-toggle-arrow { display: inline-block; font-size: 12px; transition: transform 0.2s; width: 16px; }
+        .tier-section.collapsed .tier-toggle-arrow { transform: rotate(-90deg); }
+        .tier-count { background: rgba(255,255,255,0.25); padding: 2px 10px; border-radius: 12px; font-size: 12px; margin-left: auto; }
+        .tier-content { max-height: 5000px; overflow: hidden; transition: max-height 0.3s ease; }
+        .tier-section.collapsed .tier-content { max-height: 0; }
+        .tier-table { width: 100%; border-collapse: collapse; }
+        .tier-table thead { background: #f9f8f5; border-bottom: 2px solid #e8e3d6; }
+        .tier-table th { padding: 12px 14px; text-align: left; font-weight: 600; font-size: 13px; color: #3d2b1f; white-space: nowrap; }
+        .tier-table tbody tr { border-bottom: 1px solid #f0ebe2; transition: background-color 0.15s; }
+        .tier-table tbody tr:nth-child(odd) { background: #fdfcfb; }
+        .tier-table tbody tr:hover { background: #faf8f4; }
+        .tier-table td { padding: 11px 14px; font-size: 13px; color: #3d2b1f; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .contact-row { cursor: grab; user-select: none; }
+        .contact-row:active { cursor: grabbing; }
+        .contact-row.dragging { opacity: 0.4; background: #e8e3d6 !important; }
+        .tier-section.drag-over { border: 2px dashed #4a5d23; }
+        .tier-section.drag-over .tier-header { background-color: #6b8e23; }
+        .tier-empty-msg { text-align: center; padding: 20px; color: #999; font-style: italic; }
+</style>
 </head>
 <body>
     <div class="header">
@@ -2078,24 +2103,41 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 headers = tabConfig.customHeaders;
                 dataStartRow = 0;
             }
-
             if (!headers) return [];
+
+            const tierMappings = {
+                'Tier 1': 'Tier 1', 'Tier 2': 'Tier 2',
+                'Keeping Warm': 'Keeping Warm', 'Up Next': 'Up Next',
+                'Parking Lot': 'Paused', 'Shelved - Active': 'Paused', 'Shelved - Dead': 'Paused'
+            };
+            let currentTier = 'Tier 1';
 
             for (let i = dataStartRow; i < rows.length; i++) {
                 const row = rows[i];
                 if (!row || !row[0] || !row[0].trim()) continue;
 
+                const firstCol = row[0].trim();
+
+                // Check if this is a tier separator row
+                if (tabConfig.id === 'protemoi') {
+                    let isTierRow = false;
+                    for (const [key, val] of Object.entries(tierMappings)) {
+                        if (firstCol.includes(key)) {
+                            currentTier = val;
+                            isTierRow = true;
+                            break;
+                        }
+                    }
+                    if (isTierRow) continue;
+                }
+
                 const obj = {};
                 for (let j = 0; j < headers.length; j++) {
                     obj[headers[j]] = row[j] || '';
                 }
-
-                // Skip section headers and tier groupings in protemoi
+                obj._originalIndex = i;
                 if (tabConfig.id === 'protemoi') {
-                    const firstCol = obj[headers[0]] || '';
-                    if (firstCol.includes('Tier') || firstCol.includes('(') && firstCol.includes('or less)')) {
-                        continue;
-                    }
+                    obj._tier = currentTier;
                 }
 
                 processed.push(obj);
@@ -2501,6 +2543,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         // Render table
         function renderTable() {
+            // Special rendering for Protemoi tab
+            if (currentTab === 'protemoi') {
+                renderProtemoi();
+                return;
+            }
+
             const data = getFilteredData();
             const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex') : [];
 
@@ -2937,6 +2985,154 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         loadEdits();
         loadHiddenRows();
         fetchData();
-    </script>
+    
+
+        // ========== PROTEMOI TIER SYSTEM ==========
+        const TIER_ORDER = ['Tier 1', 'Tier 2', 'Keeping Warm', 'Up Next', 'Paused'];
+
+        function loadTierChanges() {
+            try { return JSON.parse(localStorage.getItem('fieldvision_crm_tier_changes') || '{}'); }
+            catch(e) { return {}; }
+        }
+
+        function saveTierChange(idx, tier) {
+            const c = loadTierChanges();
+            c[idx] = tier;
+            localStorage.setItem('fieldvision_crm_tier_changes', JSON.stringify(c));
+        }
+
+        function applyTierChanges(contacts) {
+            const c = loadTierChanges();
+            for (const [k, t] of Object.entries(c)) {
+                const i = parseInt(k, 10);
+                const match = contacts.find(ct => ct._originalIndex === i);
+                if (match) match._tier = t;
+            }
+        }
+
+        function escapeHtml(t) {
+            if (!t) return '';
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function groupByTier(contacts) {
+            const g = {};
+            TIER_ORDER.forEach(t => g[t] = []);
+            contacts.forEach(c => {
+                const t = c._tier || 'Tier 1';
+                if (!g[t]) g[t] = [];
+                g[t].push(c);
+            });
+            return g;
+        }
+
+        function renderProtemoi() {
+            const container = document.getElementById('content');
+            if (!container) return;
+            const contacts = allData[currentTab] || [];
+            applyTierChanges(contacts);
+            const grouped = groupByTier(contacts);
+            const totalContacts = contacts.length;
+
+            let h = '<div class="stats-bar"><div class="stat-card"><div class="stat-label">TOTAL CONTACTS</div><div class="stat-value">' + totalContacts + '</div></div></div>';
+            h += '<p class="edit-hint"><em>Drag and drop contacts between tiers to re-prioritize.</em></p>';
+            h += '<div class="protemoi-container">';
+
+            TIER_ORDER.forEach(function(tier) {
+                const tc = grouped[tier] || [];
+                const cnt = tc.length;
+                h += '<div class="tier-section" data-tier="' + tier + '" ondragover="handleTierDragOver(event)" ondrop="handleTierDrop(event)" ondragleave="handleTierDragLeave(event)">';
+                h += '<div class="tier-header" onclick="toggleTierCollapse(this)">';
+                h += '<div class="tier-header-left"><span class="tier-toggle-arrow">\u25BC</span> <span class="tier-name">' + tier + '</span></div>';
+                h += '<div class="tier-count">' + cnt + '</div>';
+                h += '</div>';
+                h += '<div class="tier-content"><table class="tier-table"><thead><tr>';
+                h += '<th>Name</th><th>Company</th><th>Industry</th><th>Phase</th><th>Next Step</th><th>Follow-Up</th><th>Notes</th>';
+                h += '</tr></thead><tbody>';
+
+                if (cnt === 0) {
+                    h += '<tr><td colspan="7" class="tier-empty-msg">No contacts in this tier</td></tr>';
+                } else {
+                    tc.forEach(function(c) {
+                        const oi = c._originalIndex;
+                        h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">';
+                        h += '<td>' + escapeHtml(c['Name'] || '') + '</td>';
+                        h += '<td>' + escapeHtml(c['PROTEMOI Company'] || c['Company'] || '') + '</td>';
+                        h += '<td>' + escapeHtml(c['Industry'] || '') + '</td>';
+                        h += '<td>' + escapeHtml(c['Phase'] || '') + '</td>';
+                        h += '<td>' + escapeHtml(c['Next Step'] || '') + '</td>';
+                        h += '<td>' + escapeHtml(c['Follow-Up Date'] || '') + '</td>';
+                        h += '<td title="' + escapeHtml(c['Notes'] || '') + '">' + escapeHtml(c['Notes'] || '') + '</td>';
+                        h += '</tr>';
+                    });
+                }
+                h += '</tbody></table></div></div>';
+            });
+
+            h += '</div>';
+            container.innerHTML = h;
+        }
+
+        function toggleTierCollapse(el) {
+            el.closest('.tier-section').classList.toggle('collapsed');
+        }
+
+        var dragIdx = null;
+        var dragFromTier = null;
+
+        function handleDragStart(e) {
+            dragIdx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
+            dragFromTier = e.currentTarget.getAttribute('data-tier');
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragIdx);
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.tier-section.drag-over').forEach(function(s) { s.classList.remove('drag-over'); });
+            dragIdx = null;
+            dragFromTier = null;
+        }
+
+        function handleTierDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            var section = e.currentTarget;
+            if (section.classList.contains('tier-section')) {
+                section.classList.add('drag-over');
+            }
+        }
+
+        function handleTierDragLeave(e) {
+            var section = e.currentTarget;
+            var related = e.relatedTarget;
+            if (!section.contains(related)) {
+                section.classList.remove('drag-over');
+            }
+        }
+
+        function handleTierDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (dragIdx === null) return;
+            var section = e.currentTarget.closest('.tier-section');
+            if (!section) section = e.currentTarget;
+            var newTier = section.getAttribute('data-tier');
+            section.classList.remove('drag-over');
+            if (newTier === dragFromTier) return;
+
+            var contacts = allData[currentTab] || [];
+            var match = contacts.find(function(c) { return c._originalIndex === dragIdx; });
+            if (match) {
+                match._tier = newTier;
+                saveTierChange(dragIdx, newTier);
+                renderProtemoi();
+                renderTabs();
+            }
+        }
+</script>
 </body>
 </html>
