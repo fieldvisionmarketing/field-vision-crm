@@ -3188,7 +3188,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 const orders = stored ? JSON.parse(stored) : {};
                 delete orders[tabId];
                 localStorage.setItem('fieldvision_crm_row_order', JSON.stringify(orders));
-                renderTable();
+                renderContent();
             } catch(e) {}
         }
 
@@ -3242,7 +3242,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             dragSourceRow = null;
             dragIdx = null;
             dragFromTier = null;
-            renderTable();
+            renderContent();
         }
 
         function handleDragEnd(e) {
