@@ -833,6 +833,15 @@
         .tier-section.drag-over { border: 2px dashed #4a5d23; }
         .tier-section.drag-over .tier-header { background-color: #6b8e23; }
         .tier-empty-msg { text-align: center; padding: 20px; color: #999; font-style: italic; }
+
+        /* Drag and drop reorder */
+        tr[draggable="true"] { cursor: grab; }
+        tr[draggable="true"]:active { cursor: grabbing; }
+        tr.dragging { opacity: 0.4; background: var(--bg-tertiary); }
+        tr.drag-over-above { border-top: 3px solid var(--accent) !important; }
+        tr.drag-over-below { border-bottom: 3px solid var(--accent) !important; }
+        .sort-reset-btn { margin-left: 8px; font-size: 0.7rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; cursor: pointer; color: var(--text-secondary); }
+        .sort-reset-btn:hover { background: var(--accent); color: white; }
 </style>
 </head>
 <body>
@@ -2604,11 +2613,30 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             // Tbody
             const tbody = document.createElement('tbody');
 
+            // Apply custom row order if exists
+            const savedOrder = getRowOrder(currentTab);
+            if (savedOrder && savedOrder.length > 0) {
+                data.sort((a, b) => {
+                    const idxA = savedOrder.indexOf(a._originalIndex);
+                    const idxB = savedOrder.indexOf(b._originalIndex);
+                    if (idxA === -1 && idxB === -1) return 0;
+                    if (idxA === -1) return 1;
+                    if (idxB === -1) return -1;
+                    return idxA - idxB;
+                });
+            }
+
             data.forEach((row, displayIndex) => {
                 const originalIndex = row._originalIndex;
                 const hidden = isRowHidden(currentTab, originalIndex);
                 const tr = document.createElement('tr');
                 if (hidden) tr.classList.add('row-hidden');
+                tr.setAttribute('draggable', 'true');
+                tr.setAttribute('data-idx', originalIndex);
+                tr.addEventListener('dragover', handleDragOver);
+                tr.addEventListener('drop', handleDrop);
+                tr.addEventListener('dragstart', handleDragStart);
+                tr.addEventListener('dragend', handleDragEnd);
 
                 // Hide button cell
                 const hideTd = document.createElement('td');
@@ -3135,20 +3163,96 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         var dragIdx = null;
         var dragFromTier = null;
+        var dragSourceRow = null;
+
+        function getRowOrder(tabId) {
+            try {
+                const stored = localStorage.getItem('fieldvision_crm_row_order');
+                const orders = stored ? JSON.parse(stored) : {};
+                return orders[tabId] || null;
+            } catch(e) { return null; }
+        }
+
+        function saveRowOrder(tabId, orderArray) {
+            try {
+                const stored = localStorage.getItem('fieldvision_crm_row_order');
+                const orders = stored ? JSON.parse(stored) : {};
+                orders[tabId] = orderArray;
+                localStorage.setItem('fieldvision_crm_row_order', JSON.stringify(orders));
+            } catch(e) {}
+        }
+
+        function clearRowOrder(tabId) {
+            try {
+                const stored = localStorage.getItem('fieldvision_crm_row_order');
+                const orders = stored ? JSON.parse(stored) : {};
+                delete orders[tabId];
+                localStorage.setItem('fieldvision_crm_row_order', JSON.stringify(orders));
+                renderTable();
+            } catch(e) {}
+        }
 
         function handleDragStart(e) {
-            dragIdx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
-            dragFromTier = e.currentTarget.getAttribute('data-tier');
-            e.currentTarget.classList.add('dragging');
+            const row = e.currentTarget.closest('tr') || e.currentTarget;
+            dragIdx = parseInt(row.getAttribute('data-idx'), 10);
+            dragFromTier = row.getAttribute('data-tier');
+            dragSourceRow = row;
+            row.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', dragIdx);
+            e.dataTransfer.setData('text/plain', String(dragIdx));
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const row = e.target.closest('tr[draggable]');
+            if (!row || row === dragSourceRow) return;
+            document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(function(r) {
+                r.classList.remove('drag-over-above', 'drag-over-below');
+            });
+            const rect = row.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            if (e.clientY < midY) {
+                row.classList.add('drag-over-above');
+            } else {
+                row.classList.add('drag-over-below');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetRow = e.target.closest('tr[draggable]');
+            if (!targetRow || !dragSourceRow || targetRow === dragSourceRow) return;
+            const targetIdx = parseInt(targetRow.getAttribute('data-idx'), 10);
+            const tbody = targetRow.closest('tbody');
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
+            let order = rows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
+            const fromPos = order.indexOf(dragIdx);
+            if (fromPos > -1) order.splice(fromPos, 1);
+            const rect = targetRow.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            let toPos = order.indexOf(targetIdx);
+            if (e.clientY >= midY) toPos++;
+            order.splice(toPos, 0, dragIdx);
+            saveRowOrder(currentTab, order);
+            document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(function(r) {
+                r.classList.remove('drag-over-above', 'drag-over-below');
+            });
+            dragSourceRow = null;
+            dragIdx = null;
+            dragFromTier = null;
+            renderTable();
         }
 
         function handleDragEnd(e) {
-            e.currentTarget.classList.remove('dragging');
-            document.querySelectorAll('.tier-section.drag-over').forEach(function(s) { s.classList.remove('drag-over'); });
+            if (e.currentTarget) e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.drag-over-above, .drag-over-below, .tier-section.drag-over').forEach(function(s) {
+                s.classList.remove('drag-over-above', 'drag-over-below', 'drag-over');
+            });
             dragIdx = null;
             dragFromTier = null;
+            dragSourceRow = null;
         }
 
         function handleTierDragOver(e) {
