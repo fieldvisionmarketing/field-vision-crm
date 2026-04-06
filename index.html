@@ -2915,9 +2915,6 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             hint.textContent = 'Double-click any cell to edit inline. Click a row to open the detail editor.';
             content.appendChild(hint);
 
-            const metricsDiv = renderMetrics();
-            content.appendChild(metricsDiv);
-
             const filtersDiv = renderFilters();
             if (filtersDiv.children.length > 0) {
                 content.appendChild(filtersDiv);
@@ -2931,6 +2928,10 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
             const tableDiv = renderTable();
             if (tableDiv) content.appendChild(tableDiv);
+
+            const metricsDiv = renderMetrics();
+            content.appendChild(metricsDiv);
+
         }
 
         // Event listeners
