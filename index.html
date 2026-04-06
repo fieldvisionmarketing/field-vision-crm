@@ -3090,13 +3090,13 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     tc.forEach(function(c) {
                         const oi = c._originalIndex;
                         h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">';
-                        h += '<td>' + escapeHtml(c['Name'] || '') + '</td>';
-                        h += '<td>' + escapeHtml(c['PROTEMOI Company'] || c['Company'] || '') + '</td>';
-                        h += '<td>' + escapeHtml(c['Industry'] || '') + '</td>';
-                        h += '<td>' + escapeHtml(c['Phase'] || '') + '</td>';
-                        h += '<td>' + escapeHtml(c['Next Step'] || '') + '</td>';
-                        h += '<td>' + escapeHtml(c['Follow-Up Date'] || '') + '</td>';
-                        h += '<td title="' + escapeHtml(c['Notes'] || '') + '">' + escapeHtml(c['Notes'] || '') + '</td>';
+                                                h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Name') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'PROTEMOI Company') || getEffectiveValue('protemoi', oi, 'Company') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Industry') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Phase') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Next Step') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Follow-Up Date') || '') + '</td>';
+                        h += '<td title="' + escapeHtml(getEffectiveValue('protemoi', oi, 'Notes') || '') + '">' + escapeHtml(getEffectiveValue('protemoi', oi, 'Notes') || '') + '</td>';
                         h += '</tr>';
                     });
                 }
