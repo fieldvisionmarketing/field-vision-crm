@@ -2695,7 +2695,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                         td.appendChild(badge);
                     }
                     // Make emails clickable
-                    else if (header.includes('Email') || header.includes('email') || header.includes('Contact')) {
+                    else if (header.includes('Email') || header.includes('email') || (header.includes('Contact') && !header.includes('Date'))) {
                         if (value && value.includes('@')) {
                             const link = document.createElement('a');
                             link.href = `mailto:${value}`;
