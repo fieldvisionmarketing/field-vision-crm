@@ -3109,21 +3109,27 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 h += '<div class="tier-count">' + cnt + '</div>';
                 h += '</div>';
                 h += '<div class="tier-content"><table class="tier-table"><thead><tr>';
-                h += '<th>Name</th><th>Company</th><th>Industry</th><th>Phase</th><th>Next Step</th><th>Follow-Up</th><th>Notes</th>';
+                h += '<th>Name</th><th>Company</th><th>Email</th><th>Industry</th><th>Phase</th><th>Next Step</th><th>Follow-Up</th><th>Date of Last Contact</th><th>Notes</th>';
                 h += '</tr></thead><tbody>';
 
                 if (cnt === 0) {
-                    h += '<tr><td colspan="7" class="tier-empty-msg">No contacts in this tier</td></tr>';
+                    h += '<tr><td colspan="9" class="tier-empty-msg">No contacts in this tier</td></tr>';
                 } else {
                     tc.forEach(function(c) {
                         const oi = c._originalIndex;
                         h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">';
                                                 h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Name') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'PROTEMOI Company') || getEffectiveValue('protemoi', oi, 'Company') || '') + '</td>';
+                        h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Email') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Industry') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Phase') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Next Step') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Follow-Up Date') || '') + '</td>';
+                        // Date of Last Contact with days-ago display
+                        var dolcVal = getEffectiveValue('protemoi', oi, 'Date of Last Contact') || getEffectiveValue('protemoi', oi, 'Date') || '';
+                        var dolcDisplay = escapeHtml(dolcVal);
+                        if (dolcVal) { var dolcDate = new Date(dolcVal); if (!isNaN(dolcDate.getTime())) { var now = new Date(); var diffDays = Math.floor((now - dolcDate) / 86400000); var cls = diffDays > 30 ? 'days-ago-stale' : diffDays > 14 ? 'days-ago-warning' : 'days-ago-recent'; dolcDisplay = escapeHtml(dolcVal) + ' <span class="' + cls + '" data-days-ago="' + diffDays + '">(' + diffDays + 'd ago)</span>'; } }
+                        h += '<td>' + dolcDisplay + '</td>';
                         h += '<td title="' + escapeHtml(getEffectiveValue('protemoi', oi, 'Notes') || '') + '">' + escapeHtml(getEffectiveValue('protemoi', oi, 'Notes') || '') + '</td>';
                         h += '</tr>';
                     });
