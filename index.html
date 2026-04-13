@@ -1859,8 +1859,39 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         let searchQuery = '';
         let localEdits = {}; // { tabId: { rowIndex: { field: newValue } } }
         let editingCell = null;
-        let hiddenRows = {}; // { tabId: Set of originalIndex }
+        let hiddenRows = {}; // { tabId: Set of stable row key (company/name) }
         let showHiddenRows = false;
+
+        // Return a stable key for a row so hide-state survives sheet reordering/inserts.
+        // Falls back in priority order until a non-empty value is found.
+        function getRowKey(tabId, row) {
+            if (!row) return '';
+            const pick = (...fields) => {
+                for (const f of fields) {
+                    const v = (row[f] || '').toString().trim();
+                    if (v) return v;
+                }
+                return '';
+            };
+            let key = '';
+            if (tabId === 'sales') {
+                key = pick('Company', 'SALES Contact');
+            } else if (tabId === 'bd') {
+                key = pick('Company', 'BUSINESS DEVELOPMENT Contact');
+            } else if (tabId === 'protemoi') {
+                key = pick('Name', 'Email', 'PROTEMOI Company', 'Company');
+            } else if (tabId === 'berkeley') {
+                key = pick('Company', 'Name', 'Email');
+            } else if (tabId === 'vc') {
+                key = pick('Name', 'Company', 'Email');
+            }
+            if (!key) {
+                // Final fallback: first non-meta value
+                const firstField = Object.keys(row).find(k => k && !k.startsWith('_'));
+                key = (row[firstField] || '').toString().trim();
+            }
+            return key.toLowerCase();
+        }
 
         // Load saved edits from localStorage
         function loadEdits() {
@@ -1872,18 +1903,58 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
         }
 
-        // Load hidden rows from localStorage
+        // Load hidden rows from localStorage.
+        // New format is keyed by stable row key (company/name). Legacy format stored
+        // originalIndex integers — those are migrated to keys after data loads.
+        let legacyHiddenIndices = null;
         function loadHiddenRows() {
             try {
                 const saved = localStorage.getItem('fieldvision_crm_hidden');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    Object.entries(parsed).forEach(([tabId, indices]) => {
-                        hiddenRows[tabId] = new Set(indices);
+                if (!saved) return;
+                const parsed = JSON.parse(saved);
+                // Detect legacy index-based format (values are integers)
+                let isLegacy = false;
+                for (const arr of Object.values(parsed)) {
+                    if (Array.isArray(arr) && arr.length && typeof arr[0] === 'number') {
+                        isLegacy = true;
+                        break;
+                    }
+                }
+                if (isLegacy) {
+                    legacyHiddenIndices = parsed;
+                } else {
+                    Object.entries(parsed).forEach(([tabId, keys]) => {
+                        hiddenRows[tabId] = new Set(keys);
                     });
                 }
             } catch (e) {
                 console.warn('Could not load hidden rows');
+            }
+        }
+
+        // One-time migration: resolve legacy index-based hidden rows to stable keys
+        // using the freshly-fetched data, then persist in the new format.
+        function migrateLegacyHiddenRows() {
+            if (!legacyHiddenIndices) return;
+            try {
+                Object.entries(legacyHiddenIndices).forEach(([tabId, indices]) => {
+                    if (!hiddenRows[tabId]) hiddenRows[tabId] = new Set();
+                    const tabData = allData[tabId] || [];
+                    indices.forEach(idx => {
+                        // Legacy index was the position in the processed array (see
+                        // getFilteredData which overrode _originalIndex to the array idx).
+                        const row = tabData[idx];
+                        if (row) {
+                            const key = getRowKey(tabId, row);
+                            if (key) hiddenRows[tabId].add(key);
+                        }
+                    });
+                });
+                saveHiddenRows();
+            } catch (e) {
+                console.warn('Hidden rows migration failed', e);
+            } finally {
+                legacyHiddenIndices = null;
             }
         }
 
@@ -1900,19 +1971,22 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
         }
 
-        // Hide a row
-        function hideRow(tabId, originalIndex) {
+        // Hide a row (by row object — derives a stable key)
+        function hideRow(tabId, row) {
+            const key = typeof row === 'string' ? row : getRowKey(tabId, row);
+            if (!key) return;
             if (!hiddenRows[tabId]) hiddenRows[tabId] = new Set();
-            hiddenRows[tabId].add(originalIndex);
+            hiddenRows[tabId].add(key);
             saveHiddenRows();
             renderContent();
             showToast('Row hidden');
         }
 
-        // Restore a hidden row
-        function restoreRow(tabId, originalIndex) {
+        // Restore a hidden row (by stable key)
+        function restoreRow(tabId, key) {
+            if (!key) return;
             if (hiddenRows[tabId]) {
-                hiddenRows[tabId].delete(originalIndex);
+                hiddenRows[tabId].delete(key);
                 if (hiddenRows[tabId].size === 0) delete hiddenRows[tabId];
             }
             saveHiddenRows();
@@ -1925,9 +1999,11 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             return hiddenRows[currentTab]?.size || 0;
         }
 
-        // Check if row is hidden
-        function isRowHidden(tabId, originalIndex) {
-            return hiddenRows[tabId]?.has(originalIndex) || false;
+        // Check if a row is hidden (accepts row object)
+        function isRowHidden(tabId, row) {
+            const key = typeof row === 'string' ? row : getRowKey(tabId, row);
+            if (!key) return false;
+            return hiddenRows[tabId]?.has(key) || false;
         }
 
         // Save edits to localStorage
@@ -2160,10 +2236,15 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             document.getElementById('content').innerHTML = '<div class="loading"><div class="spinner"></div>Loading CRM data...</div>';
             allData = {};
             let hasError = false;
+            // Cache-bust every refresh so Google's CSV endpoint returns fresh content
+            // on every click of Refresh Data (gviz caches aggressively otherwise).
+            const cacheBust = Date.now();
 
             for (const tab of TABS) {
                 try {
-                    const response = await fetch(DATA_SOURCES[tab.source]);
+                    const baseUrl = DATA_SOURCES[tab.source];
+                    const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + '_cb=' + cacheBust;
+                    const response = await fetch(url, { cache: 'no-store' });
                     let csv = await response.text();
                     allData[tab.id] = processData(csv, tab);
                 } catch (error) {
@@ -2172,6 +2253,10 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     allData[tab.id] = processData(FALLBACK_DATA[tab.source], tab);
                 }
             }
+
+            // One-time migration of legacy index-based hidden rows → stable keys.
+            // Runs only on the first fetch after loading legacy data.
+            migrateLegacyHiddenRows();
 
             updateLastUpdated();
             renderTabs();
@@ -2323,9 +2408,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 return { ...row, _originalIndex: idx };
             });
 
-            // Filter out hidden rows (unless showing them)
+            // Filter out hidden rows (unless showing them) — keyed by stable row identity
             if (!showHiddenRows) {
-                data = data.filter(row => !isRowHidden(currentTab, row._originalIndex));
+                data = data.filter(row => !isRowHidden(currentTab, row));
             }
 
             // Apply search
@@ -2628,7 +2713,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
             data.forEach((row, displayIndex) => {
                 const originalIndex = row._originalIndex;
-                const hidden = isRowHidden(currentTab, originalIndex);
+                const hidden = isRowHidden(currentTab, row);
                 const tr = document.createElement('tr');
                 if (hidden) tr.classList.add('row-hidden');
                 tr.setAttribute('draggable', 'true');
@@ -2648,7 +2733,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 hideBtn.title = 'Hide this row';
                 hideBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    hideRow(currentTab, originalIndex);
+                    hideRow(currentTab, row);
                 });
                 hideTd.appendChild(hideBtn);
                 tr.appendChild(hideTd);
@@ -2928,29 +3013,30 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             };
             wrapper.appendChild(toggle);
 
-            // Panel with hidden row items
+            // Panel with hidden row items (resolves stable keys back to current rows)
             if (showHiddenRows) {
                 const panel = document.createElement('div');
                 panel.className = 'hidden-rows-panel expanded';
 
-                const hiddenIndices = [...(hiddenRows[currentTab] || [])];
-                hiddenIndices.forEach(idx => {
-                    const row = allData[currentTab]?.[idx];
-                    if (!row) return;
-
-                    const primaryKey = Object.keys(row)[0];
-                    const name = row[primaryKey] || `Row ${idx}`;
+                const hiddenKeys = [...(hiddenRows[currentTab] || [])];
+                const tabRows = allData[currentTab] || [];
+                hiddenKeys.forEach(key => {
+                    // Resolve key → current row (for display label)
+                    const row = tabRows.find(r => getRowKey(currentTab, r) === key);
+                    const displayName = row
+                        ? (row['Company'] || row['Name'] || row['PROTEMOI Company'] || key)
+                        : key;
 
                     const item = document.createElement('div');
                     item.className = 'hidden-row-item';
 
                     const nameSpan = document.createElement('span');
-                    nameSpan.textContent = name;
+                    nameSpan.textContent = displayName;
 
                     const restoreBtn = document.createElement('button');
                     restoreBtn.className = 'restore-btn';
                     restoreBtn.textContent = 'Restore';
-                    restoreBtn.onclick = () => restoreRow(currentTab, idx);
+                    restoreBtn.onclick = () => restoreRow(currentTab, key);
 
                     item.appendChild(nameSpan);
                     item.appendChild(restoreBtn);
@@ -2999,8 +3085,18 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             renderContent();
         });
 
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            fetchData();
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('refreshBtn');
+            const originalLabel = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Refreshing…';
+            try {
+                await fetchData();
+                showToast('All tabs refreshed (Sales, BD, Protemoi, Berkeley, VC)');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalLabel;
+            }
         });
 
         document.getElementById('modalClose').addEventListener('click', closeModal);
