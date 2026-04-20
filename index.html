@@ -696,6 +696,49 @@
             font-style: italic;
         }
 
+        .tab-notes-container {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+        }
+
+        .tab-notes-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .tab-notes-textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .tab-notes-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(165, 219, 93, 0.2);
+        }
+
+        .tab-notes-textarea::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
         .changes-bar {
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--accent-green);
@@ -3059,6 +3102,24 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             hint.className = 'edit-hint';
             hint.textContent = 'Double-click any cell to edit inline. Click a row to open the detail editor.';
             content.appendChild(hint);
+
+            // Tab notes
+            const notesContainer = document.createElement("div");
+            notesContainer.className = "tab-notes-container";
+            const notesLabel = document.createElement("div");
+            notesLabel.className = "tab-notes-label";
+            notesLabel.textContent = "Notes";
+            notesContainer.appendChild(notesLabel);
+            const notesTextarea = document.createElement("textarea");
+            notesTextarea.className = "tab-notes-textarea";
+            notesTextarea.placeholder = "Add notes for this tab (e.g. reminders, to-dos)...";
+            const storageKey = "crm-tab-notes-" + currentTab;
+            notesTextarea.value = localStorage.getItem(storageKey) || "";
+            notesTextarea.addEventListener("input", function() {
+                localStorage.setItem(storageKey, this.value);
+            });
+            notesContainer.appendChild(notesTextarea);
+            content.appendChild(notesContainer);
 
             const filtersDiv = renderFilters();
             if (filtersDiv.children.length > 0) {
