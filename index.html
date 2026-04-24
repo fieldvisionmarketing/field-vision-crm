@@ -3273,7 +3273,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 if (cnt === 0) {
                     h += '<tr><td colspan="9" class="tier-empty-msg">No contacts in this tier</td></tr>';
                 } else {
-                    tc.forEach(function(c) {
+                    var tierOrder = getRowOrder('protemoi_' + tier); if (tierOrder && tierOrder.length > 0) { tc.sort(function(a, b) { var idxA = tierOrder.indexOf(a._originalIndex); var idxB = tierOrder.indexOf(b._originalIndex); if (idxA === -1 && idxB === -1) return 0; if (idxA === -1) return 1; if (idxB === -1) return -1; return idxA - idxB; }); } tc.forEach(function(c) {
                         const oi = c._originalIndex;
                         h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">';
                                                 h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Name') || '') + '</td>';
@@ -3400,7 +3400,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             let toPos = order.indexOf(targetIdx);
             if (e.clientY >= midY) toPos++;
             order.splice(toPos, 0, dragIdx);
-            saveRowOrder(currentTab, order);
+            var orderKey = currentTab; if (currentTab === 'protemoi' && targetRow.getAttribute('data-tier')) { orderKey = 'protemoi_' + targetRow.getAttribute('data-tier'); } saveRowOrder(orderKey, order);
             document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(function(r) {
                 r.classList.remove('drag-over-above', 'drag-over-below');
             });
