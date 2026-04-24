@@ -3386,21 +3386,61 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         function handleDrop(e) {
             e.preventDefault();
-            const targetRow = e.target.closest('tr[draggable]');
+            var targetRow = e.target.closest('tr[draggable]');
             if (!targetRow || !dragSourceRow || targetRow === dragSourceRow) return;
-            const targetIdx = parseInt(targetRow.getAttribute('data-idx'), 10);
-            const tbody = targetRow.closest('tbody');
-            if (!tbody) return;
-            const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
-            let order = rows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
-            const fromPos = order.indexOf(dragIdx);
-            if (fromPos > -1) order.splice(fromPos, 1);
-            const rect = targetRow.getBoundingClientRect();
-            const midY = rect.top + rect.height / 2;
-            let toPos = order.indexOf(targetIdx);
-            if (e.clientY >= midY) toPos++;
-            order.splice(toPos, 0, dragIdx);
-            var orderKey = currentTab; if (currentTab === 'protemoi' && targetRow.getAttribute('data-tier')) { orderKey = 'protemoi_' + targetRow.getAttribute('data-tier'); } saveRowOrder(orderKey, order);
+            var targetIdx = parseInt(targetRow.getAttribute('data-idx'), 10);
+            var targetTier = targetRow.getAttribute('data-tier');
+
+            // --- Protemoi cross-tier + within-tier reorder ---
+            if (currentTab === 'protemoi' && targetTier) {
+                var isCrossTier = (dragFromTier && dragFromTier !== targetTier);
+
+                // 1. If cross-tier, change the contact's tier assignment
+                if (isCrossTier) {
+                    var contacts = allData[currentTab] || [];
+                    var match = contacts.find(function(c) { return c._originalIndex === dragIdx; });
+                    if (match) {
+                        match._tier = targetTier;
+                        saveTierChange(dragIdx, targetTier);
+                    }
+                    // Remove from old tier's saved order
+                    var oldKey = 'protemoi_' + dragFromTier;
+                    var oldOrder = getRowOrder(oldKey);
+                    if (oldOrder) {
+                        var removePos = oldOrder.indexOf(dragIdx);
+                        if (removePos > -1) oldOrder.splice(removePos, 1);
+                        saveRowOrder(oldKey, oldOrder);
+                    }
+                }
+
+                // 2. Build new order for the target tier
+                var targetTbody = targetRow.closest('tbody');
+                var targetRows = targetTbody ? Array.from(targetTbody.querySelectorAll('tr[data-idx]')) : [];
+                var newOrder = targetRows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
+                var existPos = newOrder.indexOf(dragIdx);
+                if (existPos > -1) newOrder.splice(existPos, 1);
+                var rect = targetRow.getBoundingClientRect();
+                var midY = rect.top + rect.height / 2;
+                var insertPos = newOrder.indexOf(targetIdx);
+                if (e.clientY >= midY) insertPos++;
+                newOrder.splice(insertPos, 0, dragIdx);
+                saveRowOrder('protemoi_' + targetTier, newOrder);
+
+            } else {
+                // --- Non-Protemoi tabs: simple reorder ---
+                var tbody = targetRow.closest('tbody');
+                if (!tbody) return;
+                var rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
+                var order = rows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
+                var fromPos = order.indexOf(dragIdx);
+                if (fromPos > -1) order.splice(fromPos, 1);
+                var rect2 = targetRow.getBoundingClientRect();
+                var midY2 = rect2.top + rect2.height / 2;
+                var toPos = order.indexOf(targetIdx);
+                if (e.clientY >= midY2) toPos++;
+                order.splice(toPos, 0, dragIdx);
+                saveRowOrder(currentTab, order);
+            }
             document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(function(r) {
                 r.classList.remove('drag-over-above', 'drag-over-below');
             });
