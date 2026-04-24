@@ -1975,7 +1975,89 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
         }
 
-        // One-time migration: resolve legacy index-based hidden rows to stable keys
+        
+        // One-time migration: remap Protemoi localStorage keys from CSV row numbers
+        // to array positions. Before this fix, _originalIndex stored the CSV row number
+        // (e.g. 2,3,4...) but getEffectiveValue used it as an array index (0,1,2...).
+        // This caused Protemoi rows to display wrong contact data.
+        function migrateProtemaiIndices() {
+            if (localStorage.getItem('crm_protemoi_idx_migrated')) return;
+            var contacts = allData['protemoi'] || [];
+            if (contacts.length === 0) return;
+
+            // Build mapping: csvRow -> arrayPosition
+            var mapping = {};
+            contacts.forEach(function(c) {
+                if (c._csvRow !== undefined) {
+                    mapping[c._csvRow] = c._originalIndex;
+                }
+            });
+
+            // Migrate tier changes (keyed by _originalIndex which was CSV row)
+            try {
+                var tc = JSON.parse(localStorage.getItem('fieldvision_crm_tier_changes') || '{}');
+                var newTc = {};
+                var changed = false;
+                Object.keys(tc).forEach(function(k) {
+                    var oldIdx = parseInt(k, 10);
+                    if (mapping[oldIdx] !== undefined) {
+                        newTc[mapping[oldIdx]] = tc[k];
+                        if (mapping[oldIdx] !== oldIdx) changed = true;
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem('fieldvision_crm_tier_changes', JSON.stringify(newTc));
+                }
+            } catch(e) { console.warn('Tier changes migration failed', e); }
+
+            // Migrate local edits for protemoi tab
+            try {
+                var edits = JSON.parse(localStorage.getItem('fieldvision_crm_edits') || '{}');
+                if (edits['protemoi']) {
+                    var newEdits = {};
+                    var editChanged = false;
+                    Object.keys(edits['protemoi']).forEach(function(k) {
+                        var oldIdx = parseInt(k, 10);
+                        if (mapping[oldIdx] !== undefined) {
+                            newEdits[mapping[oldIdx]] = edits['protemoi'][k];
+                            if (mapping[oldIdx] !== oldIdx) editChanged = true;
+                        }
+                    });
+                    if (editChanged) {
+                        edits['protemoi'] = newEdits;
+                        localStorage.setItem('fieldvision_crm_edits', JSON.stringify(edits));
+                    }
+                }
+            } catch(e) { console.warn('Local edits migration failed', e); }
+
+            // Migrate saved row orders for protemoi tiers
+            try {
+                var orderData = JSON.parse(localStorage.getItem('fieldvision_crm_row_order') || '{}');
+                var orderChanged = false;
+                Object.keys(orderData).forEach(function(key) {
+                    if (key.indexOf('protemoi_') === 0) {
+                        var order = orderData[key];
+                        if (Array.isArray(order)) {
+                            orderData[key] = order.map(function(oldIdx) {
+                                if (mapping[oldIdx] !== undefined) {
+                                    if (mapping[oldIdx] !== oldIdx) orderChanged = true;
+                                    return mapping[oldIdx];
+                                }
+                                return oldIdx;
+                            });
+                        }
+                    }
+                });
+                if (orderChanged) {
+                    localStorage.setItem('fieldvision_crm_row_order', JSON.stringify(orderData));
+                }
+            } catch(e) { console.warn('Row order migration failed', e); }
+
+            localStorage.setItem('crm_protemoi_idx_migrated', '1');
+            console.log('Protemoi index migration complete');
+        }
+
+// One-time migration: resolve legacy index-based hidden rows to stable keys
         // using the freshly-fetched data, then persist in the new format.
         function migrateLegacyHiddenRows() {
             if (!legacyHiddenIndices) return;
@@ -2263,7 +2345,8 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 for (let j = 0; j < headers.length; j++) {
                     obj[headers[j]] = row[j] || '';
                 }
-                obj._originalIndex = i;
+                obj._originalIndex = processed.length;
+                obj._csvRow = i;
                 if (tabConfig.id === 'protemoi') {
                     obj._tier = currentTier;
                 }
@@ -2300,6 +2383,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             // One-time migration of legacy index-based hidden rows â stable keys.
             // Runs only on the first fetch after loading legacy data.
             migrateLegacyHiddenRows();
+
+            // One-time migration: remap Protemoi localStorage keys from CSV row numbers to array positions
+            migrateProtemaiIndices();
 
             updateLastUpdated();
             renderTabs();
@@ -2461,7 +2547,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 const query = searchQuery.toLowerCase();
                 data = data.filter(row =>
                     Object.entries(row).some(([key, val]) =>
-                        key !== '_originalIndex' && (val || '').toString().toLowerCase().includes(query)
+                        key !== '_originalIndex' && key !== '_csvRow' && key !== '_tier' && (val || '').toString().toLowerCase().includes(query)
                     )
                 );
             }
@@ -2687,7 +2773,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
 
             const data = getFilteredData();
-            const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex') : [];
+            const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex' && h !== '_csvRow' && h !== '_tier') : [];
 
             if (data.length === 0) {
                 const emptyDiv = document.createElement('div');
@@ -2930,7 +3016,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             const modalTitle = document.getElementById('modalTitle');
             const modalFooter = document.getElementById('modalFooter');
 
-            const primaryKey = Object.keys(row).filter(k => k !== '_originalIndex')[0];
+            const primaryKey = Object.keys(row).filter(k => k !== '_originalIndex' && k !== '_csvRow' && k !== '_tier')[0];
             modalTitle.textContent = row[primaryKey] || 'Contact Details';
 
             modalBody.innerHTML = '';
