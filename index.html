@@ -3275,7 +3275,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 } else {
                     tc.forEach(function(c) {
                         const oi = c._originalIndex;
-                        h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">';
+                        h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">';
                                                 h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Name') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'PROTEMOI Company') || getEffectiveValue('protemoi', oi, 'Company') || '') + '</td>';
                         h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Email') || '') + '</td>';
