@@ -1885,7 +1885,8 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 'Priority': ['Low', 'Mid', 'High']
             },
             bd: {
-                'Status': ['Initial Outreach', 'New Prospect', 'Engaged', 'Needs Follow Up', 'Meeting Scheduled', 'Deprecated/Purgatory'],
+                'Status': ['Cold Outreach', 'Replied', 'Meeting Set', 'In Conversation', 'Proposal Sent', 'Negotiating', 'Won → Sales', 'Ghosted', 'Dead'],
+                'Phase': ['Phase 1 – Opening', 'Phase 2 – Warming', 'Phase 3 – Qualifying', 'Phase 4 – Advancing', 'Phase 5 – Closing', 'Phase 6 – Stalled'],
                 'Priority': ['Low', 'Mid', 'High']
             }
         };
@@ -1975,89 +1976,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
         }
 
-        
-        // One-time migration: remap Protemoi localStorage keys from CSV row numbers
-        // to array positions. Before this fix, _originalIndex stored the CSV row number
-        // (e.g. 2,3,4...) but getEffectiveValue used it as an array index (0,1,2...).
-        // This caused Protemoi rows to display wrong contact data.
-        function migrateProtemaiIndices() {
-            if (localStorage.getItem('crm_protemoi_idx_migrated')) return;
-            var contacts = allData['protemoi'] || [];
-            if (contacts.length === 0) return;
-
-            // Build mapping: csvRow -> arrayPosition
-            var mapping = {};
-            contacts.forEach(function(c) {
-                if (c._csvRow !== undefined) {
-                    mapping[c._csvRow] = c._originalIndex;
-                }
-            });
-
-            // Migrate tier changes (keyed by _originalIndex which was CSV row)
-            try {
-                var tc = JSON.parse(localStorage.getItem('fieldvision_crm_tier_changes') || '{}');
-                var newTc = {};
-                var changed = false;
-                Object.keys(tc).forEach(function(k) {
-                    var oldIdx = parseInt(k, 10);
-                    if (mapping[oldIdx] !== undefined) {
-                        newTc[mapping[oldIdx]] = tc[k];
-                        if (mapping[oldIdx] !== oldIdx) changed = true;
-                    }
-                });
-                if (changed) {
-                    localStorage.setItem('fieldvision_crm_tier_changes', JSON.stringify(newTc));
-                }
-            } catch(e) { console.warn('Tier changes migration failed', e); }
-
-            // Migrate local edits for protemoi tab
-            try {
-                var edits = JSON.parse(localStorage.getItem('fieldvision_crm_edits') || '{}');
-                if (edits['protemoi']) {
-                    var newEdits = {};
-                    var editChanged = false;
-                    Object.keys(edits['protemoi']).forEach(function(k) {
-                        var oldIdx = parseInt(k, 10);
-                        if (mapping[oldIdx] !== undefined) {
-                            newEdits[mapping[oldIdx]] = edits['protemoi'][k];
-                            if (mapping[oldIdx] !== oldIdx) editChanged = true;
-                        }
-                    });
-                    if (editChanged) {
-                        edits['protemoi'] = newEdits;
-                        localStorage.setItem('fieldvision_crm_edits', JSON.stringify(edits));
-                    }
-                }
-            } catch(e) { console.warn('Local edits migration failed', e); }
-
-            // Migrate saved row orders for protemoi tiers
-            try {
-                var orderData = JSON.parse(localStorage.getItem('fieldvision_crm_row_order') || '{}');
-                var orderChanged = false;
-                Object.keys(orderData).forEach(function(key) {
-                    if (key.indexOf('protemoi_') === 0) {
-                        var order = orderData[key];
-                        if (Array.isArray(order)) {
-                            orderData[key] = order.map(function(oldIdx) {
-                                if (mapping[oldIdx] !== undefined) {
-                                    if (mapping[oldIdx] !== oldIdx) orderChanged = true;
-                                    return mapping[oldIdx];
-                                }
-                                return oldIdx;
-                            });
-                        }
-                    }
-                });
-                if (orderChanged) {
-                    localStorage.setItem('fieldvision_crm_row_order', JSON.stringify(orderData));
-                }
-            } catch(e) { console.warn('Row order migration failed', e); }
-
-            localStorage.setItem('crm_protemoi_idx_migrated', '1');
-            console.log('Protemoi index migration complete');
-        }
-
-// One-time migration: resolve legacy index-based hidden rows to stable keys
+        // One-time migration: resolve legacy index-based hidden rows to stable keys
         // using the freshly-fetched data, then persist in the new format.
         function migrateLegacyHiddenRows() {
             if (!legacyHiddenIndices) return;
@@ -2345,8 +2264,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 for (let j = 0; j < headers.length; j++) {
                     obj[headers[j]] = row[j] || '';
                 }
-                obj._originalIndex = processed.length;
-                obj._csvRow = i;
+                obj._originalIndex = i;
                 if (tabConfig.id === 'protemoi') {
                     obj._tier = currentTier;
                 }
@@ -2383,9 +2301,6 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             // One-time migration of legacy index-based hidden rows â stable keys.
             // Runs only on the first fetch after loading legacy data.
             migrateLegacyHiddenRows();
-
-            // One-time migration: remap Protemoi localStorage keys from CSV row numbers to array positions
-            migrateProtemaiIndices();
 
             updateLastUpdated();
             renderTabs();
@@ -2547,7 +2462,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 const query = searchQuery.toLowerCase();
                 data = data.filter(row =>
                     Object.entries(row).some(([key, val]) =>
-                        key !== '_originalIndex' && key !== '_csvRow' && key !== '_tier' && (val || '').toString().toLowerCase().includes(query)
+                        key !== '_originalIndex' && (val || '').toString().toLowerCase().includes(query)
                     )
                 );
             }
@@ -2773,7 +2688,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
 
             const data = getFilteredData();
-            const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex' && h !== '_csvRow' && h !== '_tier') : [];
+            const headers = data.length > 0 ? Object.keys(data[0]).filter(h => h !== '_originalIndex') : [];
 
             if (data.length === 0) {
                 const emptyDiv = document.createElement('div');
@@ -3016,7 +2931,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             const modalTitle = document.getElementById('modalTitle');
             const modalFooter = document.getElementById('modalFooter');
 
-            const primaryKey = Object.keys(row).filter(k => k !== '_originalIndex' && k !== '_csvRow' && k !== '_tier')[0];
+            const primaryKey = Object.keys(row).filter(k => k !== '_originalIndex')[0];
             modalTitle.textContent = row[primaryKey] || 'Contact Details';
 
             modalBody.innerHTML = '';
@@ -3200,10 +3115,24 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             notesTextarea.className = "tab-notes-textarea";
             notesTextarea.placeholder = "Add notes for this tab (e.g. reminders, to-dos)...";
             const storageKey = "crm-tab-notes-" + currentTab;
+            const heightKey = "crm-tab-notes-height-" + currentTab;
             notesTextarea.value = localStorage.getItem(storageKey) || "";
+            // Restore persisted height
+            const savedHeight = localStorage.getItem(heightKey);
+            if (savedHeight) {
+                notesTextarea.style.height = savedHeight;
+            }
             notesTextarea.addEventListener("input", function() {
                 localStorage.setItem(storageKey, this.value);
             });
+            // Persist height on resize (uses ResizeObserver)
+            const resizeObserver = new ResizeObserver(function(entries) {
+                for (const entry of entries) {
+                    const h = entry.target.style.height || entry.target.offsetHeight + 'px';
+                    localStorage.setItem(heightKey, entry.target.offsetHeight + 'px');
+                }
+            });
+            resizeObserver.observe(notesTextarea);
             notesContainer.appendChild(notesTextarea);
             content.appendChild(notesContainer);
 
@@ -3359,7 +3288,18 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 if (cnt === 0) {
                     h += '<tr><td colspan="9" class="tier-empty-msg">No contacts in this tier</td></tr>';
                 } else {
-                    var tierOrder = getRowOrder('protemoi_' + tier); if (tierOrder && tierOrder.length > 0) { tc.sort(function(a, b) { var idxA = tierOrder.indexOf(a._originalIndex); var idxB = tierOrder.indexOf(b._originalIndex); if (idxA === -1 && idxB === -1) return 0; if (idxA === -1) return 1; if (idxB === -1) return -1; return idxA - idxB; }); } tc.forEach(function(c) {
+                    var tierOrder = getRowOrder('protemoi_' + tier);
+                    if (tierOrder && tierOrder.length > 0) {
+                        tc.sort(function(a, b) {
+                            var idxA = tierOrder.indexOf(a._originalIndex);
+                            var idxB = tierOrder.indexOf(b._originalIndex);
+                            if (idxA === -1 && idxB === -1) return 0;
+                            if (idxA === -1) return 1;
+                            if (idxB === -1) return -1;
+                            return idxA - idxB;
+                        });
+                    }
+                    tc.forEach(function(c) {
                         const oi = c._originalIndex;
                         h += '<tr class="contact-row" draggable="true" data-tier="' + tier + '" data-idx="' + oi + '" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">';
                                                 h += '<td>' + escapeHtml(getEffectiveValue('protemoi', oi, 'Name') || '') + '</td>';
@@ -3472,61 +3412,25 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
         function handleDrop(e) {
             e.preventDefault();
-            var targetRow = e.target.closest('tr[draggable]');
+            const targetRow = e.target.closest('tr[draggable]');
             if (!targetRow || !dragSourceRow || targetRow === dragSourceRow) return;
-            var targetIdx = parseInt(targetRow.getAttribute('data-idx'), 10);
-            var targetTier = targetRow.getAttribute('data-tier');
-
-            // --- Protemoi cross-tier + within-tier reorder ---
-            if (currentTab === 'protemoi' && targetTier) {
-                var isCrossTier = (dragFromTier && dragFromTier !== targetTier);
-
-                // 1. If cross-tier, change the contact's tier assignment
-                if (isCrossTier) {
-                    var contacts = allData[currentTab] || [];
-                    var match = contacts.find(function(c) { return c._originalIndex === dragIdx; });
-                    if (match) {
-                        match._tier = targetTier;
-                        saveTierChange(dragIdx, targetTier);
-                    }
-                    // Remove from old tier's saved order
-                    var oldKey = 'protemoi_' + dragFromTier;
-                    var oldOrder = getRowOrder(oldKey);
-                    if (oldOrder) {
-                        var removePos = oldOrder.indexOf(dragIdx);
-                        if (removePos > -1) oldOrder.splice(removePos, 1);
-                        saveRowOrder(oldKey, oldOrder);
-                    }
-                }
-
-                // 2. Build new order for the target tier
-                var targetTbody = targetRow.closest('tbody');
-                var targetRows = targetTbody ? Array.from(targetTbody.querySelectorAll('tr[data-idx]')) : [];
-                var newOrder = targetRows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
-                var existPos = newOrder.indexOf(dragIdx);
-                if (existPos > -1) newOrder.splice(existPos, 1);
-                var rect = targetRow.getBoundingClientRect();
-                var midY = rect.top + rect.height / 2;
-                var insertPos = newOrder.indexOf(targetIdx);
-                if (e.clientY >= midY) insertPos++;
-                newOrder.splice(insertPos, 0, dragIdx);
-                saveRowOrder('protemoi_' + targetTier, newOrder);
-
-            } else {
-                // --- Non-Protemoi tabs: simple reorder ---
-                var tbody = targetRow.closest('tbody');
-                if (!tbody) return;
-                var rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
-                var order = rows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
-                var fromPos = order.indexOf(dragIdx);
-                if (fromPos > -1) order.splice(fromPos, 1);
-                var rect2 = targetRow.getBoundingClientRect();
-                var midY2 = rect2.top + rect2.height / 2;
-                var toPos = order.indexOf(targetIdx);
-                if (e.clientY >= midY2) toPos++;
-                order.splice(toPos, 0, dragIdx);
-                saveRowOrder(currentTab, order);
+            const targetIdx = parseInt(targetRow.getAttribute('data-idx'), 10);
+            const tbody = targetRow.closest('tbody');
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll('tr[data-idx]'));
+            let order = rows.map(function(r) { return parseInt(r.getAttribute('data-idx'), 10); });
+            const fromPos = order.indexOf(dragIdx);
+            if (fromPos > -1) order.splice(fromPos, 1);
+            const rect = targetRow.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            let toPos = order.indexOf(targetIdx);
+            if (e.clientY >= midY) toPos++;
+            order.splice(toPos, 0, dragIdx);
+            var orderKey = currentTab;
+            if (currentTab === 'protemoi' && targetRow.getAttribute('data-tier')) {
+                orderKey = 'protemoi_' + targetRow.getAttribute('data-tier');
             }
+            saveRowOrder(orderKey, order);
             document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(function(r) {
                 r.classList.remove('drag-over-above', 'drag-over-below');
             });
