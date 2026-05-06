@@ -345,6 +345,8 @@
             border-bottom: 1px solid var(--border);
             color: var(--text-primary);
             position: relative;
+            overflow: hidden;
+            vertical-align: top;
         }
 
         td.editable:hover {
@@ -404,6 +406,25 @@
         tbody tr {
             cursor: pointer;
             transition: background-color 0.2s;
+            position: relative;
+        }
+
+        /* Row resize handle */
+        .row-resize-handle {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            cursor: row-resize;
+            z-index: 2;
+            background: transparent;
+        }
+
+        .row-resize-handle:hover,
+        .row-resize-handle.active {
+            background: var(--accent);
+            opacity: 0.5;
         }
 
         tbody tr:hover {
@@ -2952,6 +2973,22 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     tr.appendChild(td);
                 });
 
+                // Add row resize handle
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'row-resize-handle';
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startRowResize(e, tr, originalIndex);
+                });
+                tr.appendChild(resizeHandle);
+
+                // Apply saved row height
+                const savedHeights = getRowHeights(currentTab);
+                if (savedHeights[originalIndex]) {
+                    tr.style.height = savedHeights[originalIndex] + 'px';
+                }
+
                 tbody.appendChild(tr);
             });
 
@@ -3408,6 +3445,27 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             });
         }
 
+        // Attach row resize handles for Protemoi
+            const prContainer = document.getElementById('protemoi-container') || document.querySelector('.protemoi-list');
+            if (prContainer) {
+                prContainer.querySelectorAll('.contact-row').forEach(tr => {
+                    const rowIdx = parseInt(tr.getAttribute('data-idx'));
+                    const resizeHandle = document.createElement('div');
+                    resizeHandle.className = 'row-resize-handle';
+                    tr.appendChild(resizeHandle);
+                    const savedHeights = getRowHeights('protemoi');
+                    if (savedHeights[rowIdx]) {
+                        tr.style.height = savedHeights[rowIdx] + 'px';
+                    }
+                    resizeHandle.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startRowResize(e, tr, rowIdx);
+                    });
+                });
+            }
+        }
+
         function toggleTierCollapse(el) {
             el.closest('.tier-section').classList.toggle('collapsed');
         }
@@ -3546,6 +3604,57 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 renderTabs();
             }
         }
-</script>
+// ===== ROW RESIZE FUNCTIONALITY =====
+        let resizeState = null;
+
+        function getRowHeights(tabId) {
+            try {
+                const stored = localStorage.getItem('rowHeights_' + tabId);
+                return stored ? JSON.parse(stored) : {};
+            } catch(e) { return {}; }
+        }
+
+        function saveRowHeight(tabId, rowIndex, height) {
+            const heights = getRowHeights(tabId);
+            heights[rowIndex] = height;
+            localStorage.setItem('rowHeights_' + tabId, JSON.stringify(heights));
+        }
+
+        function startRowResize(e, tr, rowIndex) {
+            resizeState = {
+                tr: tr,
+                rowIndex: rowIndex,
+                startY: e.clientY,
+                startHeight: tr.getBoundingClientRect().height
+            };
+            const handle = tr.querySelector('.row-resize-handle');
+            if (handle) handle.classList.add('active');
+            document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onRowResize);
+            document.addEventListener('mouseup', stopRowResize);
+        }
+
+        function onRowResize(e) {
+            if (!resizeState) return;
+            const diff = e.clientY - resizeState.startY;
+            const newHeight = Math.max(40, resizeState.startHeight + diff);
+            resizeState.tr.style.height = newHeight + 'px';
+        }
+
+        function stopRowResize(e) {
+            if (!resizeState) return;
+            const finalHeight = resizeState.tr.getBoundingClientRect().height;
+            saveRowHeight(currentTab, resizeState.rowIndex, finalHeight);
+            const handle = resizeState.tr.querySelector('.row-resize-handle');
+            if (handle) handle.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onRowResize);
+            document.removeEventListener('mouseup', stopRowResize);
+            resizeState = null;
+        }
+
+    </script>
 </body>
 </html>
