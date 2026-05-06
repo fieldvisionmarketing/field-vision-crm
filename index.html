@@ -2386,7 +2386,7 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 button.className = `tab ${tab.id === currentTab ? 'active' : ''}`;
                 const editCount = localEdits[tab.id] ? Object.keys(localEdits[tab.id]).length : 0;
                 const editIndicator = editCount > 0 ? ` <span class="edit-indicator">(${editCount} edited)</span>` : '';
-                button.innerHTML = `${tab.name} <span class="tab-badge">${allData[tab.id]?.length || 0}</span>${editIndicator}`;
+                button.innerHTML = `${tab.name} <span class="tab-badge">${(allData[tab.id] ? allData[tab.id].filter(row => !isRowHidden(tab.id, row)).length : 0)}</span>${editIndicator}`;
                 button.onclick = () => {
                     currentTab = tab.id;
                     currentSort = { column: null, direction: 'asc' };
@@ -2987,6 +2987,11 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 const savedHeights = getRowHeights(currentTab);
                 if (savedHeights[originalIndex]) {
                     tr.style.height = savedHeights[originalIndex] + 'px';
+                    tr.style.maxHeight = savedHeights[originalIndex] + 'px';
+                    tr.querySelectorAll('td').forEach(td => {
+                        td.style.height = savedHeights[originalIndex] + 'px';
+                        td.style.maxHeight = savedHeights[originalIndex] + 'px';
+                    });
                 }
 
                 tbody.appendChild(tr);
@@ -3455,6 +3460,11 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     const savedHeights = getRowHeights('protemoi');
                     if (savedHeights[rowIdx]) {
                         tr.style.height = savedHeights[rowIdx] + 'px';
+                        tr.style.maxHeight = savedHeights[rowIdx] + 'px';
+                        tr.querySelectorAll('td').forEach(td => {
+                            td.style.height = savedHeights[rowIdx] + 'px';
+                            td.style.maxHeight = savedHeights[rowIdx] + 'px';
+                        });
                     }
                     resizeHandle.addEventListener('mousedown', (e) => {
                         e.preventDefault();
@@ -3637,13 +3647,25 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
         function onRowResize(e) {
             if (!resizeState) return;
             const diff = e.clientY - resizeState.startY;
-            const newHeight = Math.max(40, resizeState.startHeight + diff);
+            const newHeight = Math.max(20, resizeState.startHeight + diff);
             resizeState.tr.style.height = newHeight + 'px';
+            resizeState.tr.style.maxHeight = newHeight + 'px';
+            resizeState.tr.querySelectorAll('td').forEach(td => {
+                td.style.height = newHeight + 'px';
+                td.style.maxHeight = newHeight + 'px';
+            });
         }
 
         function stopRowResize(e) {
             if (!resizeState) return;
             const finalHeight = resizeState.tr.getBoundingClientRect().height;
+            // Ensure final clipping is applied
+            resizeState.tr.style.height = finalHeight + 'px';
+            resizeState.tr.style.maxHeight = finalHeight + 'px';
+            resizeState.tr.querySelectorAll('td').forEach(td => {
+                td.style.height = finalHeight + 'px';
+                td.style.maxHeight = finalHeight + 'px';
+            });
             saveRowHeight(currentTab, resizeState.rowIndex, finalHeight);
             const handle = resizeState.tr.querySelector('.row-resize-handle');
             if (handle) handle.classList.remove('active');
