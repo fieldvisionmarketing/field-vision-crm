@@ -427,6 +427,11 @@
             opacity: 0.5;
         }
 
+        .cell-content {
+            overflow: hidden;
+            width: 100%;
+        }
+
         tbody tr:hover {
             background-color: var(--bg-secondary);
         }
@@ -2970,6 +2975,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                         startCellEdit(td, currentTab, originalIndex, header, value);
                     });
 
+                    // Wrap td content in clippable div
+                    const cellWrapper = document.createElement('div');
+                    cellWrapper.className = 'cell-content';
+                    while (td.firstChild) cellWrapper.appendChild(td.firstChild);
+                    td.appendChild(cellWrapper);
+
                     tr.appendChild(td);
                 });
 
@@ -2987,10 +2998,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 const savedHeights = getRowHeights(currentTab);
                 if (savedHeights[originalIndex]) {
                     tr.style.height = savedHeights[originalIndex] + 'px';
-                    tr.style.maxHeight = savedHeights[originalIndex] + 'px';
-                    tr.querySelectorAll('td').forEach(td => {
-                        td.style.height = savedHeights[originalIndex] + 'px';
-                        td.style.maxHeight = savedHeights[originalIndex] + 'px';
+                    const ch = Math.max(0, savedHeights[originalIndex] - 32);
+                    tr.querySelectorAll('.cell-content').forEach(div => {
+                        div.style.maxHeight = ch + 'px';
                     });
                 }
 
@@ -3460,10 +3470,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                     const savedHeights = getRowHeights('protemoi');
                     if (savedHeights[rowIdx]) {
                         tr.style.height = savedHeights[rowIdx] + 'px';
-                        tr.style.maxHeight = savedHeights[rowIdx] + 'px';
-                        tr.querySelectorAll('td').forEach(td => {
-                            td.style.height = savedHeights[rowIdx] + 'px';
-                            td.style.maxHeight = savedHeights[rowIdx] + 'px';
+                        const ch = Math.max(0, savedHeights[rowIdx] - 32);
+                        tr.querySelectorAll('.cell-content').forEach(div => {
+                            div.style.maxHeight = ch + 'px';
                         });
                     }
                     resizeHandle.addEventListener('mousedown', (e) => {
@@ -3649,10 +3658,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             const diff = e.clientY - resizeState.startY;
             const newHeight = Math.max(20, resizeState.startHeight + diff);
             resizeState.tr.style.height = newHeight + 'px';
-            resizeState.tr.style.maxHeight = newHeight + 'px';
-            resizeState.tr.querySelectorAll('td').forEach(td => {
-                td.style.height = newHeight + 'px';
-                td.style.maxHeight = newHeight + 'px';
+            const contentHeight = Math.max(0, newHeight - 32);
+            resizeState.tr.querySelectorAll('.cell-content').forEach(div => {
+                div.style.maxHeight = contentHeight + 'px';
             });
         }
 
@@ -3661,10 +3669,9 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             const finalHeight = resizeState.tr.getBoundingClientRect().height;
             // Ensure final clipping is applied
             resizeState.tr.style.height = finalHeight + 'px';
-            resizeState.tr.style.maxHeight = finalHeight + 'px';
-            resizeState.tr.querySelectorAll('td').forEach(td => {
-                td.style.height = finalHeight + 'px';
-                td.style.maxHeight = finalHeight + 'px';
+            const ch = Math.max(0, finalHeight - 32);
+            resizeState.tr.querySelectorAll('.cell-content').forEach(div => {
+                div.style.maxHeight = ch + 'px';
             });
             saveRowHeight(currentTab, resizeState.rowIndex, finalHeight);
             const handle = resizeState.tr.querySelector('.row-resize-handle');
