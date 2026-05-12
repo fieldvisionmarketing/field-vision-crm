@@ -2506,7 +2506,11 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                 // Apply local edits
                 const edits = localEdits[currentTab]?.[idx];
                 if (edits) {
-                    return { ...row, ...edits, _originalIndex: idx };
+                    const filteredEdits = {};
+                    for (const [k, v] of Object.entries(edits)) {
+                        if (k in row) filteredEdits[k] = v;
+                    }
+                    return { ...row, ...filteredEdits, _originalIndex: idx };
                 }
                 return { ...row, _originalIndex: idx };
             });
@@ -2566,7 +2570,12 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             // Apply local edits so filters reflect current effective values
             const data = rawData.map((row, idx) => {
                 const edits = localEdits[currentTab]?.[idx];
-                return edits ? { ...row, ...edits } : row;
+                if (edits) {
+                    const fe = {};
+                    for (const [k, v] of Object.entries(edits)) { if (k in row) fe[k] = v; }
+                    return { ...row, ...fe };
+                }
+                return row;
             });
 
             // Status filters
@@ -3448,7 +3457,14 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
                             if (rowArrayIdx >= 0 && rowArrayIdx < contacts.length) {
                                 const row = contacts[rowArrayIdx];
                                 const edits = localEdits[currentTab]?.[rowArrayIdx];
-                                const merged = edits ? { ...row, ...edits, _originalIndex: rowArrayIdx } : { ...row, _originalIndex: rowArrayIdx };
+                                if (edits) {
+                                    const filteredEdits = {};
+                                    for (const [k, v] of Object.entries(edits)) {
+                                        if (k in row) filteredEdits[k] = v;
+                                    }
+                                    return { ...row, ...filteredEdits, _originalIndex: idx };
+                                }
+                                return { ...row, _originalIndex: idx };
                                 showDetail(merged, rowArrayIdx);
                             }
                         }, 250);
