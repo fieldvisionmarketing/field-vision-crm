@@ -2291,6 +2291,17 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
             }
             if (!headers) return [];
 
+            // Strip columns not in the tab schema (e.g. Link removed from BD Google Sheet)
+            const _excludeCols = new Set(['Link', '']);
+            if (tabConfig.id === 'bd') {
+                var _colMap = [];
+                headers = headers.filter((h, i) => {
+                    if (_excludeCols.has(h)) return false;
+                    _colMap.push(i);
+                    return true;
+                });
+            }
+
             const tierMappings = {
                 'Tier 1': 'Tier 1', 'Tier 2': 'Tier 2',
                 'Keeping Warm': 'Keeping Warm', 'Up Next': 'Up Next',
@@ -2319,7 +2330,8 @@ Michael Parkins,michael.parkins@berkeley.edu,DMEC Staff,[linkedin]`
 
                 const obj = {};
                 for (let j = 0; j < headers.length; j++) {
-                    obj[headers[j]] = row[j] || '';
+                    const colIdx = _colMap ? _colMap[j] : j;
+                    obj[headers[j]] = row[colIdx] || '';
                 }
                 obj._originalIndex = i;
                 if (tabConfig.id === 'protemoi') {
