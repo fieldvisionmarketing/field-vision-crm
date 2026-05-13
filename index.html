@@ -1,54 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Field Vision CRM</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Vision CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-left">
-        <div class="logo">Field Vision <span>CRM</span></div>
-      </div>
-      <div class="header-right">
-        <button class="btn" id="refresh-btn">â» Refresh</button>
-      </div>
-    </header>
+    <div class="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+            <div class="logo">Field Vision <span>CRM</span></div>
+        </div>
+        <div class="header-right">
+            <button class="btn" id="refresh-btn">&#187; Refresh</button>
+        </div>
+      </header>
 
-    <!-- Tab Navigation -->
-    <nav class="tab-bar" id="tab-nav"></nav>
+      <!-- Tab Navigation -->
+      <nav class="tab-bar" id="tab-nav"></nav>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <input type="text" class="search-input" id="search-input" placeholder="Search contacts...">
-        <button class="btn" id="toggle-hidden">Show Hidden</button>
-        <span class="row-count" id="row-count"></span>
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+            <input type="text" class="search-input" id="search-input" placeholder="Search contacts...">
+            <button class="btn" id="toggle-hidden">Show Hidden</button>
+            <span class="row-count" id="row-count"></span>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn btn-primary" id="add-row">+ Add Row</button>
+        </div>
       </div>
-      <div class="toolbar-right">
-        <button class="btn btn-primary" id="add-row">+ Add Row</button>
+
+      <!-- Data Table -->
+      <div class="table-wrapper">
+        <table>
+            <thead id="table-head"></thead>
+            <tbody id="table-body">
+                <tr><td colspan="20" class="loading-cell">Loading...</td></tr>
+            </tbody>
+        </table>
       </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
     </div>
 
-    <!-- Data Table -->
-    <div class="table-wrapper">
-      <table>
-        <thead id="table-head"></thead>
-        <tbody id="table-body">
-          <tr><td colspan="20" class="loading-cell">Loading...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
-  </div>
-
-  <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
