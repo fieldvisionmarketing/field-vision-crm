@@ -334,7 +334,8 @@ function updateCounts() {
   const visible = rows.filter(r => !r.hidden).length;
   const hidden = rows.filter(r => r.hidden).length;
   const total = rows.length;
-  document.getElementById('row-count').textContent = `${visible} visible` + (hidden > 0 ? ` Â· ${hidden} hidden` : '') + ` Â· ${total} total`;
+  const dot = String.fromCharCode(183);
+  document.getElementById('row-count').textContent = visible + ' visible' + (hidden > 0 ? ' ' + dot + ' ' + hidden + ' hidden' : '') + ' ' + dot + ' ' + total + ' total';
 }
 
 // -- Event Binding --
