@@ -98,7 +98,7 @@ function renderTableBody() {
 }
 
 // -- Protemoi Tier Rendering --
-const TIER_ORDER = ['Tier One', 'Tier Two', 'Keeping Warm', 'Up Next', 'Shelved'];
+const TIER_ORDER = ['Tier One', 'Tier Two', 'Keeping Warm', 'Paused'];
 
 function renderProtemoi(filtered, cols, tbody) {
   const tierGroups = {};
@@ -107,13 +107,7 @@ function renderProtemoi(filtered, cols, tbody) {
 
   filtered.forEach(r => {
     const tier = r.tier;
-    // Handle legacy numeric tiers
-    if (tier === 1 || tier === '1') tierGroups['Tier One'].push(r);
-    else if (tier === 2 || tier === '2') tierGroups['Tier Two'].push(r);
-    else if (tier && TIER_ORDER.includes(tier)) tierGroups[tier].push(r);
-    else if (tier === 'Keeping Warm') tierGroups['Keeping Warm'].push(r);
-    else if (tier === 'Up Next') tierGroups['Up Next'].push(r);
-    else if (tier === 'Shelved') tierGroups['Shelved'].push(r);
+    if (tier && TIER_ORDER.includes(tier)) tierGroups[tier].push(r);
     else tierGroups['Unassigned'].push(r);
   });
 
@@ -122,22 +116,36 @@ function renderProtemoi(filtered, cols, tbody) {
 
   allTiers.forEach(tierName => {
     const group = tierGroups[tierName];
-    if (group.length === 0) return;
-
     const isCollapsed = collapsedTiers[tierName] === true;
     const arrow = isCollapsed ? '&#9654;' : '&#9660;';
-    html += '<tr class="tier-header-row" data-tier="' + tierName + '">' +
+    const emptyClass = group.length === 0 ? ' tier-empty' : '';
+    html += '<tr class="tier-header-row' + emptyClass + '" data-tier="' + tierName + '">' +
       '<td colspan="' + (cols.length + 3) + '">' +
       '<span class="tier-toggle">' + arrow + '</span> ' +
       tierName + ' (' + group.length + ')' +
       '</td></tr>';
 
     if (!isCollapsed) {
-      html += group.map((row, idx) => renderRow(row, idx, cols)).join('');
+      if (group.length === 0) {
+        html += '<tr class="tier-drop-zone" data-tier="' + tierName + '">' +
+          '<td colspan="' + (cols.length + 3) + '" class="drop-zone-cell">Drop rows here</td></tr>';
+      } else {
+        html += group.map((row, idx) => renderRow(row, idx, cols)).join('');
+      }
     }
   });
 
   tbody.innerHTML = html;
+}
+
+// Find which tier a row element belongs to
+function getTierForRow(tr) {
+  var prev = tr.previousElementSibling;
+  while (prev) {
+    if (prev.classList.contains('tier-header-row')) return prev.dataset.tier;
+    prev = prev.previousElementSibling;
+  }
+  return null;
 }
 
 // -- Render Single Row --
@@ -283,13 +291,21 @@ function handleDragStart(e) {
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  const tr = e.target.closest('tr[data-id]');
-  if (!tr || tr.dataset.id === dragSrcId) return;
 
   // Remove existing drop indicators
-  document.querySelectorAll('.drop-above, .drop-below').forEach(el => {
-    el.classList.remove('drop-above', 'drop-below');
+  document.querySelectorAll('.drop-above, .drop-below, .drop-target').forEach(el => {
+    el.classList.remove('drop-above', 'drop-below', 'drop-target');
   });
+
+  // Check if hovering over a tier header or drop zone (for cross-tier drops)
+  const tierTarget = e.target.closest('.tier-header-row, .tier-drop-zone');
+  if (tierTarget) {
+    tierTarget.classList.add('drop-target');
+    return;
+  }
+
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr || tr.dataset.id === dragSrcId) return;
 
   // Determine if dropping above or below
   const rect = tr.getBoundingClientRect();
@@ -302,27 +318,58 @@ function handleDragOver(e) {
 }
 
 function handleDragLeave(e) {
-  const tr = e.target.closest('tr[data-id]');
+  const tr = e.target.closest('tr');
   if (tr) {
-    tr.classList.remove('drop-above', 'drop-below');
+    tr.classList.remove('drop-above', 'drop-below', 'drop-target');
   }
 }
 
 async function handleDrop(e) {
   e.preventDefault();
-  document.querySelectorAll('.drop-above, .drop-below, .dragging').forEach(el => {
-    el.classList.remove('drop-above', 'drop-below', 'dragging');
+  document.querySelectorAll('.drop-above, .drop-below, .dragging, .drop-target').forEach(el => {
+    el.classList.remove('drop-above', 'drop-below', 'dragging', 'drop-target');
   });
 
+  if (!dragSrcId) return;
+  const srcRow = rows.find(r => r.id === dragSrcId);
+  if (!srcRow) return;
+
+  // Check if dropped on a tier header or drop zone (cross-tier move)
+  const tierTarget = e.target.closest('.tier-header-row, .tier-drop-zone');
+  if (tierTarget && activeTab === 'protemoi') {
+    const newTier = tierTarget.dataset.tier;
+     if (newTier && newTier !== srcRow.tier) {
+      srcRow.tier = newTier;
+      try {
+        await db.updateContact(srcRow.id, { tier: newTier });
+        showToast('Moved to ' + newTier);
+      } catch (err) {
+        console.error('Tier update failed:', err);
+        showToast('Tier move failed!', true);
+      }
+      renderTableBody();
+      dragSrcId = null;
+      return;
+    }
+  }
+
   const targetTr = e.target.closest('tr[data-id]');
-  if (!targetTr || !dragSrcId) return;
+  if (!targetTr) { dragSrcId = null; return; }
 
   const targetId = targetTr.dataset.id;
-  if (targetId === dragSrcId) return;
+  if (targetId === dragSrcId) { dragSrcId = null; return; }
 
-  const srcRow = rows.find(r => r.id === dragSrcId);
   const targetRow = rows.find(r => r.id === targetId);
-  if (!srcRow || !targetRow) return;
+  if (!targetRow) { dragSrcId = null; return; }
+
+  // If Protemoi and target is in a different tier, update tier
+  if (activeTab === 'protemoi') {
+    const targetTier = getTierForRow(targetTr);
+    if (targetTier && targetTier !== srcRow.tier) {
+      srcRow.tier = targetTier;
+      await db.updateContact(srcRow.id, { tier: targetTier });
+    }
+  }
 
   // Get visible (filtered) rows to determine order
   const filtered = rows.filter(r => !r.hidden || showHidden);
@@ -364,8 +411,8 @@ async function handleDrop(e) {
 
 function handleDragEnd() {
   dragSrcId = null;
-  document.querySelectorAll('.drop-above, .drop-below, .dragging').forEach(el => {
-    el.classList.remove('drop-above', 'drop-below', 'dragging');
+  document.querySelectorAll('.drop-above, .drop-below, .dragging, .drop-target').forEach(el => {
+    el.classList.remove('drop-above', 'drop-below', 'dragging', 'drop-target');
   });
 }
 
@@ -383,7 +430,7 @@ async function toggleHide(id) {
     showToast(newHidden ? 'Row hidden' : 'Row visible');
   } catch (err) {
     console.error('Toggle hide failed:', err);
-    row.hidden = !newHidden;
+    row.hidden = !newHiddenn;
     renderTableBody();
     updateCounts();
   }
