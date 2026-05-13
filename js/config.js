@@ -1,4 +1,4 @@
-// Field Vision CRM V2 â Configuration
+// Field Vision CRM V2 - Configuration
 export const SUPABASE_URL = 'https://bmdrbuczkjekdnpmjajw.supabase.co/rest/v1';
 export const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZHJidWN6a2pla2RucG1qYWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MjY3MTEsImV4cCI6MjA5NDIwMjcxMX0.JEEMf-UzmPzOk_-2vWJ99UH95FmPiyfnxFM4m-wb0Lg';
 
@@ -32,7 +32,7 @@ export const TAB_COLUMNS = {
       options: ['New Prospect', 'Cold Outreach', 'Initial Outreach', 'Replied', 'In Conversation', 'Meeting Set', 'Engaged', 'Needs Follow-Up', 'Up Next', 'Ghosted', 'Dead', 'Deprecated / Purgatory'] },
     { key: 'priority', label: 'Priority', type: 'priority', width: '80px' },
     { key: 'phase', label: 'Phase', type: 'select', width: '160px',
-      options: ['Phase 1 â Opening', 'Phase 2 â Warming', 'Phase 3 â Qualifying', 'Phase 4 â Proposing', 'Phase 5 â Closing', 'Phase 6 â Stalled'] },
+      options: ['Phase 1 - Opening', 'Phase 2 - Warming', 'Phase 3 - Qualifying', 'Phase 4 - Proposing', 'Phase 5 - Closing', 'Phase 6 - Stalled'] },
     { key: 'date_of_last_contact', label: 'DOLC', type: 'date', width: '110px' },
     { key: 'next_contact_date', label: 'Next Contact', type: 'date', width: '110px' },
     { key: 'summary', label: 'Summary', type: 'text', width: '220px' },
@@ -44,8 +44,8 @@ export const TAB_COLUMNS = {
     { key: 'company', label: 'Name', type: 'text', width: '160px' },
     { key: 'contact_name', label: 'Role', type: 'text', width: '160px' },
     { key: 'linkedin_url', label: 'LinkedIn', type: 'link', width: '60px' },
-    { key: 'contact_type', label: 'Type', type: 'select', width: '120px',
-      options: ['Friend', 'Mentor', 'Colleague', 'Industry', 'Family', 'Other'] },
+    { key: 'tier', label: 'Tier', type: 'select', width: '80px',
+      options: ['1', '2'] },
     { key: 'date_of_last_contact', label: 'DOLC', type: 'date', width: '110px' },
     { key: 'notes', label: 'Notes', type: 'text', width: '280px' },
   ],
