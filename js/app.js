@@ -152,7 +152,7 @@ function renderTableBody() {
 }
 
 // -- Protemoi Tier Rendering --
-const TIER_ORDER = ['Tier One', 'Tier Two', 'Keeping Warm', 'Paused'];
+const TIER_ORDER = ['Tier One', 'Tier Two', 'Tier Three', 'Up Next', 'Keeping Warm', 'Paused'];
 
 function renderProtemoi(filtered, cols, tbody) {
   const tierGroups = {};
