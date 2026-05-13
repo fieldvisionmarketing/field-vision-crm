@@ -1,4 +1,4 @@
-/* Field Vision CRM V2 â Styles (Light Theme) */
+/* Field Vision CRM V2 - Styles (Light Theme) */
 
 :root {
   --bg: #ffffff;
@@ -32,7 +32,7 @@ body {
   min-height: 100vh;
 }
 
-/* â Header â */
+/* --Header --*/
 .header {
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@ body {
   gap: 8px;
 }
 
-/* â Tab Navigation â */
+/* --Tab Navigation --*/
 .tab-bar {
   display: flex;
   gap: 2px;
@@ -100,7 +100,7 @@ body {
   font-weight: 600;
 }
 
-/* â Toolbar â */
+/* --Toolbar --*/
 .toolbar {
   display: flex;
   align-items: center;
@@ -178,7 +178,7 @@ body {
   font-size: 12px;
 }
 
-/* â Table â */
+/* --Table --*/
 .table-wrapper {
   overflow-x: auto;
   flex: 1;
@@ -241,7 +241,7 @@ tr[data-id] {
   min-width: 60px;
 }
 
-/* â Cell States â */
+/* --Cell States --*/
 .cell-text {
   cursor: pointer;
 }
@@ -270,7 +270,7 @@ tr[data-id] {
   color: var(--text-dim);
 }
 
-/* â Priority Badges â */
+/* --Priority Badges --*/
 .cell-priority {
   cursor: pointer;
   font-weight: 600;
@@ -283,7 +283,7 @@ tr[data-id] {
 .priority-mid { color: var(--orange); }
 .priority-low { color: var(--text-dim); }
 
-/* â Date Aging â */
+/* --Date Aging --*/
 .cell-date-display {
   cursor: pointer;
   font-variant-numeric: tabular-nums;
@@ -293,7 +293,7 @@ tr[data-id] {
 .date-aging { color: var(--orange); }
 .date-stale { color: var(--red); }
 
-/* â Editing â */
+/* --Editing --*/
 .cell-editing {
   padding: 2px 4px !important;
 }
@@ -318,7 +318,7 @@ tr[data-id] {
   color-scheme: light;
 }
 
-/* â Hidden Rows â */
+/* --Hidden Rows --*/
 .row-hidden td {
   opacity: 0.4;
 }
@@ -327,7 +327,7 @@ tr[data-id] {
   opacity: 0.7;
 }
 
-/* â Row Actions â */
+/* --Row Actions --*/
 .row-actions {
   text-align: center;
   white-space: nowrap;
@@ -353,13 +353,68 @@ tr:hover .btn-icon {
   background: var(--bg-active);
 }
 
-.btn-move {
-  font-size: 11px;
-  padding: 1px 3px;
-  color: var(--text-muted);
+/* --Drag and Drop --*/
+.drag-handle {
+  width: 28px;
+  min-width: 28px;
+  text-align: center;
+  cursor: grab;
+  color: var(--text-dim);
+  font-size: 14px;
+  user-select: none;
+  opacity: 0.3;
+  transition: opacity 0.15s, color 0.15s;
 }
 
-/* â Tier Headers (Protemoi) â */
+tr:hover .drag-handle {
+  opacity: 0.7;
+}
+
+.drag-handle:hover {
+  opacity: 1 !important;
+  color: var(--text);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+tr.dragging {
+  opacity: 0.4;
+  background: var(--bg-active);
+}
+
+tr.dragging td {
+  background: var(--bg-active);
+}
+
+tr.drop-above td {
+  border-top: 2px solid var(--accent-green);
+}
+
+tr.drop-below td {
+  border-bottom: 2px solid var(--accent-green);
+}
+
+/* --Tier Toggle (Protemoi collapsible) --*/
+.tier-toggle {
+  display: inline-block;
+  width: 16px;
+  font-size: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.tier-header-row {
+  cursor: pointer;
+}
+
+.tier-header-row:hover .tier-toggle {
+  color: var(--accent);
+}
+
+/* --Tier Headers (Protemoi) --*/
 .tier-header-row td {
   background: var(--bg-surface);
   font-weight: 700;
@@ -374,7 +429,7 @@ tr:hover .btn-icon {
   background: var(--bg-surface);
 }
 
-/* â Loading â */
+/* --Loading --*/
 .loading-cell {
   text-align: center;
   padding: 40px 20px !important;
@@ -386,7 +441,7 @@ tr:hover .btn-icon {
   color: var(--red);
 }
 
-/* â Toast â */
+/* --Toast --*/
 .toast {
   position: fixed;
   bottom: 20px;
@@ -419,20 +474,20 @@ tr:hover .btn-icon {
   border: 1px solid #fca5a5;
 }
 
-/* â Layout â */
+/* --Layout --*/
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
 
-/* â Scrollbar â */
+/* --Scrollbar --*/
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-surface); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-/* â Responsive â */
+/* --Responsive --*/
 @media (max-width: 768px) {
   .header { padding: 10px 12px; }
   .tab-bar { padding: 0 12px; }
