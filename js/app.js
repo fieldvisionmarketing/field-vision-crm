@@ -1,8 +1,8 @@
-// Field Vision CRM V2 â Main Application
+// Field Vision CRM V2 - Main Application
 import { TABS, TAB_COLUMNS } from './config.js';
 import * as db from './db.js';
 
-// ââ State ââ
+// -- State --
 let activeTab = 'bd';
 let rows = [];
 let showHidden = false;
@@ -10,14 +10,14 @@ let searchQuery = '';
 let editingCell = null; // { id, key }
 let saveTimeout = null;
 
-// ââ Init ââ
+// -- Init --
 document.addEventListener('DOMContentLoaded', () => {
   renderTabs();
   bindGlobalEvents();
   switchTab('bd');
 });
 
-// ââ Tab Navigation ââ
+// -- Tab Navigation --
 function renderTabs() {
   const nav = document.getElementById('tab-nav');
   nav.innerHTML = TABS.map(t =>
@@ -35,10 +35,9 @@ function switchTab(tabId) {
   loadData();
 }
 
-// ââ Data Loading ââ
+// -- Data Loading --
 async function loadData() {
   const tableBody = document.getElementById('table-body');
-  const tableHead = document.getElementById('table-head');
   tableBody.innerHTML = '<tr><td colspan="20" class="loading-cell">Loading...</td></tr>';
 
   try {
@@ -52,7 +51,7 @@ async function loadData() {
   }
 }
 
-// ââ Table Header ââ
+// -- Table Header --
 function renderTableHeader() {
   const cols = TAB_COLUMNS[activeTab];
   const head = document.getElementById('table-head');
@@ -63,13 +62,13 @@ function renderTableHeader() {
   </tr>`;
 }
 
-// ââ Table Body ââ
+// -- Table Body --
 function renderTableBody() {
   const cols = TAB_COLUMNS[activeTab];
   const tbody = document.getElementById('table-body');
   const query = searchQuery.toLowerCase();
 
-  const filtered = rows.filter(r => {
+  let filtered = rows.filter(r => {
     if (!showHidden && r.hidden) return false;
     if (query) {
       return cols.some(c => {
@@ -85,18 +84,61 @@ function renderTableBody() {
     return;
   }
 
-  tbody.innerHTML = filtered.map((row, idx) => {
-    const hiddenClass = row.hidden ? 'row-hidden' : '';
-    return `<tr class="${hiddenClass}" data-id="${row.id}">
-      <td class="row-num">${idx + 1}</td>
-      ${cols.map(c => renderCell(row, c)).join('')}
-      <td class="row-actions">
-        <button class="btn-icon btn-hide" data-id="${row.id}" title="${row.hidden ? 'Unhide' : 'Hide'}">
-          ${row.hidden ? 'ð' : 'ð'}
-        </button>
-      </td>
-    </tr>`;
-  }).join('');
+  // Protemoi tab: group by tier
+  if (activeTab === 'protemoi') {
+    renderProtemoi(filtered, cols, tbody);
+    return;
+  }
+
+  // Standard tab rendering
+  tbody.innerHTML = filtered.map((row, idx) => renderRow(row, idx, cols, filtered)).join('');
+}
+
+// -- Protemoi Tier Rendering --
+function renderProtemoi(filtered, cols, tbody) {
+  const tier1 = filtered.filter(r => r.tier === 1 || r.tier === '1');
+  const tier2 = filtered.filter(r => r.tier === 2 || r.tier === '2');
+  const noTier = filtered.filter(r => !r.tier || (r.tier !== 1 && r.tier !== '1' && r.tier !== 2 && r.tier !== '2'));
+
+  let html = '';
+
+  if (tier1.length > 0) {
+    html += `<tr class="tier-header-row"><td colspan="${cols.length + 2}">Tier 1 (${tier1.length})</td></tr>`;
+    html += tier1.map((row, idx) => renderRow(row, idx, cols, tier1)).join('');
+  }
+
+  if (tier2.length > 0) {
+    html += `<tr class="tier-header-row"><td colspan="${cols.length + 2}">Tier 2 (${tier2.length})</td></tr>`;
+    html += tier2.map((row, idx) => renderRow(row, idx, cols, tier2)).join('');
+  }
+
+  if (noTier.length > 0) {
+    html += `<tr class="tier-header-row"><td colspan="${cols.length + 2}">Unassigned (${noTier.length})</td></tr>`;
+    html += noTier.map((row, idx) => renderRow(row, idx, cols, noTier)).join('');
+  }
+
+  tbody.innerHTML = html;
+}
+
+// -- Render Single Row --
+function renderRow(row, idx, cols, list) {
+  const hiddenClass = row.hidden ? 'row-hidden' : '';
+  const isFirst = idx === 0;
+  const isLast = idx === list.length - 1;
+  const prevId = !isFirst ? list[idx - 1].id : '';
+  const nextId = !isLast ? list[idx + 1].id : '';
+
+  return `<tr class="${hiddenClass}" data-id="${row.id}">
+    <td class="row-num">${idx + 1}</td>
+    ${cols.map(c => renderCell(row, c)).join('')}
+    <td class="row-actions">
+      <button class="btn-icon btn-move" data-id="${row.id}" data-swap="${prevId}" data-dir="up" title="Move up" ${isFirst ? 'disabled style="visibility:hidden"' : ''}>&#9650;</button>
+      <button class="btn-icon btn-move" data-id="${row.id}" data-swap="${nextId}" data-dir="down" title="Move down" ${isLast ? 'disabled style="visibility:hidden"' : ''}>&#9660;</button>
+      <button class="btn-icon btn-hide" data-id="${row.id}" title="${row.hidden ? 'Unhide' : 'Hide'}">
+        ${row.hidden ? '&#128065;' : '&#128064;'}
+      </button>
+    </td>
+  </tr>`;
 }
 
 function renderCell(row, col) {
@@ -105,30 +147,30 @@ function renderCell(row, col) {
 
   if (col.type === 'link') {
     if (value) {
-      return `<td class="cell-link"><a href="${escapeHtml(value)}" target="_blank" rel="noopener" title="${escapeHtml(value)}">ð</a></td>`;
+      return `<td class="cell-link"><a href="${escapeHtml(value)}" target="_blank" rel="noopener" title="${escapeHtml(value)}">&#128279;</a></td>`;
     }
-    return `<td class="cell-link cell-empty" data-id="${row.id}" data-key="${col.key}">â</td>`;
+    return `<td class="cell-link cell-empty" data-id="${row.id}" data-key="${col.key}">-</td>`;
   }
 
   if (col.type === 'priority') {
     const cls = value ? `priority-${value.toLowerCase()}` : '';
     if (isEditing) {
       return `<td class="cell-editing"><select class="cell-select" data-id="${row.id}" data-key="${col.key}" onchange="window._saveSelect(this)" onblur="window._closeEdit()">
-        <option value="">â</option>
+        <option value="">-</option>
         ${['High', 'Mid', 'Low'].map(o => `<option value="${o}" ${value === o ? 'selected' : ''}>${o}</option>`).join('')}
       </select></td>`;
     }
-    return `<td class="cell-priority ${cls}" data-id="${row.id}" data-key="${col.key}">${value || 'â'}</td>`;
+    return `<td class="cell-priority ${cls}" data-id="${row.id}" data-key="${col.key}">${value || '-'}</td>`;
   }
 
   if (col.type === 'select') {
     if (isEditing) {
       return `<td class="cell-editing"><select class="cell-select" data-id="${row.id}" data-key="${col.key}" onchange="window._saveSelect(this)" onblur="window._closeEdit()">
-        <option value="">â</option>
+        <option value="">-</option>
         ${(col.options || []).map(o => `<option value="${o}" ${value === o ? 'selected' : ''}>${o}</option>`).join('')}
       </select></td>`;
     }
-    return `<td class="cell-text" data-id="${row.id}" data-key="${col.key}">${escapeHtml(value || 'â')}</td>`;
+    return `<td class="cell-text" data-id="${row.id}" data-key="${col.key}">${escapeHtml(value || '-')}</td>`;
   }
 
   if (col.type === 'date') {
@@ -136,7 +178,7 @@ function renderCell(row, col) {
       const dateVal = value || '';
       return `<td class="cell-editing"><input type="date" class="cell-date" value="${dateVal}" data-id="${row.id}" data-key="${col.key}" onchange="window._saveInput(this)" onblur="window._closeEdit()"></td>`;
     }
-    const display = value ? formatDate(value) : 'â';
+    const display = value ? formatDate(value) : '-';
     const age = value ? getDaysSince(value) : null;
     const ageClass = age !== null ? (age > 30 ? 'date-stale' : age > 14 ? 'date-aging' : 'date-fresh') : '';
     return `<td class="cell-date-display ${ageClass}" data-id="${row.id}" data-key="${col.key}">${display}</td>`;
@@ -148,14 +190,13 @@ function renderCell(row, col) {
   }
   const displayText = value || '';
   const truncated = displayText.length > 60 ? displayText.substring(0, 57) + '...' : displayText;
-  return `<td class="cell-text" data-id="${row.id}" data-key="${col.key}" title="${escapeAttr(displayText)}">${escapeHtml(truncated) || '<span class="cell-placeholder">â</span>'}</td>`;
+  return `<td class="cell-text" data-id="${row.id}" data-key="${col.key}" title="${escapeAttr(displayText)}">${escapeHtml(truncated) || '<span class="cell-placeholder">-</span>'}</td>`;
 }
 
-// ââ Cell Editing ââ
+// -- Cell Editing --
 function startEdit(id, key) {
   editingCell = { id, key };
   renderTableBody();
-  // Focus the input
   setTimeout(() => {
     const input = document.querySelector('.cell-editing input, .cell-editing select');
     if (input) {
@@ -201,7 +242,6 @@ window._cancelEdit = function() {
 };
 
 async function saveCell(id, key, value) {
-  // Optimistic update
   const row = rows.find(r => r.id === id);
   if (row) row[key] = value;
 
@@ -211,11 +251,42 @@ async function saveCell(id, key, value) {
   } catch (err) {
     console.error('Save failed:', err);
     showToast('Save failed!', true);
-    loadData(); // reload to get correct state
+    loadData();
   }
 }
 
-// ââ Row Actions ââ
+// -- Row Reordering --
+async function swapRows(id1, id2) {
+  const row1 = rows.find(r => r.id === id1);
+  const row2 = rows.find(r => r.id === id2);
+  if (!row1 || !row2) return;
+
+  const sort1 = row1.sort_order;
+  const sort2 = row2.sort_order;
+
+  // Optimistic swap
+  row1.sort_order = sort2;
+  row2.sort_order = sort1;
+  rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  renderTableBody();
+
+  try {
+    await Promise.all([
+      db.updateContact(id1, { sort_order: sort2 }),
+      db.updateContact(id2, { sort_order: sort1 }),
+    ]);
+    showToast('Reordered');
+  } catch (err) {
+    console.error('Reorder failed:', err);
+    row1.sort_order = sort1;
+    row2.sort_order = sort2;
+    rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    renderTableBody();
+    showToast('Reorder failed!', true);
+  }
+}
+
+// -- Row Actions --
 async function toggleHide(id) {
   const row = rows.find(r => r.id === id);
   if (!row) return;
@@ -250,7 +321,6 @@ async function addNewRow() {
       renderTableBody();
       updateCounts();
       showToast('Row added');
-      // Start editing the company name
       startEdit(result[0].id, 'company');
     }
   } catch (err) {
@@ -259,15 +329,15 @@ async function addNewRow() {
   }
 }
 
-// ââ Counts ââ
+// -- Counts --
 function updateCounts() {
   const visible = rows.filter(r => !r.hidden).length;
   const hidden = rows.filter(r => r.hidden).length;
   const total = rows.length;
-  document.getElementById('row-count').textContent = `${visible} visible${hidden > 0 ? ` Â· ${hidden} hidden` : ''} Â· ${total} total`;
+  document.getElementById('row-count').textContent = `${visible} visible` + (hidden > 0 ? ` Â· ${hidden} hidden` : '') + ` Â· ${total} total`;
 }
 
-// ââ Event Binding ââ
+// -- Event Binding --
 function bindGlobalEvents() {
   // Tab clicks
   document.getElementById('tab-nav').addEventListener('click', e => {
@@ -275,17 +345,28 @@ function bindGlobalEvents() {
     if (btn) switchTab(btn.dataset.tab);
   });
 
-  // Cell clicks for editing
+  // Cell clicks for editing + move buttons + hide buttons
   document.getElementById('table-body').addEventListener('click', e => {
-    const cell = e.target.closest('td[data-id][data-key]');
-    if (cell && !cell.classList.contains('cell-editing')) {
-      startEdit(cell.dataset.id, cell.dataset.key);
+    // Move buttons
+    const moveBtn = e.target.closest('.btn-move');
+    if (moveBtn && !moveBtn.disabled) {
+      const id = moveBtn.dataset.id;
+      const swapId = moveBtn.dataset.swap;
+      if (id && swapId) swapRows(id, swapId);
       return;
     }
+
     // Hide/unhide button
     const hideBtn = e.target.closest('.btn-hide');
     if (hideBtn) {
       toggleHide(hideBtn.dataset.id);
+      return;
+    }
+
+    // Cell clicks for editing
+    const cell = e.target.closest('td[data-id][data-key]');
+    if (cell && !cell.classList.contains('cell-editing')) {
+      startEdit(cell.dataset.id, cell.dataset.key);
     }
   });
 
@@ -317,7 +398,7 @@ function bindGlobalEvents() {
   });
 }
 
-// ââ Utilities ââ
+// -- Utilities --
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
