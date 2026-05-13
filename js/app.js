@@ -11,6 +11,8 @@ let editingCell = null; // { id, key }
 let saveTimeout = null;
 let dragSrcId = null;
 let collapsedTiers = {}; // { tierName: true/false }
+let sortCol = null;  // column key to sort by
+let sortDir = 0;     // 0 = default (sort_order), 1 = asc, -1 = desc
 
 // -- Init --
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,6 +33,8 @@ function switchTab(tabId) {
   activeTab = tabId;
   showHidden = false;
   searchQuery = '';
+  sortCol = null;
+  sortDir = 0;
   document.getElementById('search-input').value = '';
   document.getElementById('toggle-hidden').textContent = 'Show Hidden';
   renderTabs();
@@ -60,9 +64,56 @@ function renderTableHeader() {
   head.innerHTML = '<tr>' +
     '<th class="row-actions-col"></th>' +
     '<th class="row-actions-col">#</th>' +
-    cols.map(c => '<th style="min-width:' + c.width + '">' + c.label + '</th>').join('') +
+    cols.map(c => {
+      const isSorted = sortCol === c.key && sortDir !== 0;
+      const arrow = isSorted ? (sortDir === 1 ? ' &#9650;' : ' &#9660;') : '';
+      const cls = isSorted ? ' th-sorted' : '';
+      return '<th class="th-sortable' + cls + '" style="min-width:' + c.width + '" data-sort-key="' + c.key + '">' + c.label + arrow + '</th>';
+    }).join('') +
     '<th class="row-actions-col"></th>' +
     '</tr>';
+}
+
+// -- Column Sorting --
+function handleSort(key) {
+  if (sortCol === key) {
+    // Cycle: asc -> desc -> default
+    if (sortDir === 1) sortDir = -1;
+    else { sortCol = null; sortDir = 0; }
+  } else {
+    sortCol = key;
+    sortDir = 1;
+  }
+  renderTableHeader();
+  renderTableBody();
+}
+
+function sortFilteredRows(filtered) {
+  if (!sortCol || sortDir === 0) return filtered;
+  const col = TAB_COLUMNS[activeTab].find(c => c.key === sortCol);
+  if (!col) return filtered;
+
+  return filtered.slice().sort(function(a, b) {
+    var va = a[sortCol], vb = b[sortCol];
+    // Nulls/empty always sort last
+    if (!va && va !== 0) return 1;
+    if (!vb && vb !== 0) return -1;
+    // Date comparison
+    if (col.type === 'date') {
+      return sortDir * (new Date(va) - new Date(vb));
+    }
+    // Priority ordering
+    if (col.type === 'priority') {
+      var pri = { High: 1, Mid: 2, Low: 3 };
+      return sortDir * ((pri[va] || 99) - (pri[vb] || 99));
+    }
+    // Numeric check
+    if (!isNaN(va) && !isNaN(vb)) {
+      return sortDir * (Number(va) - Number(vb));
+    }
+    // String comparison
+    return sortDir * String(va).localeCompare(String(vb));
+  });
 }
 
 // -- Table Body --
@@ -92,6 +143,9 @@ function renderTableBody() {
     renderProtemoi(filtered, cols, tbody);
     return;
   }
+
+  // Apply column sort
+  filtered = sortFilteredRows(filtered);
 
   // Standard tab rendering
   tbody.innerHTML = filtered.map((row, idx) => renderRow(row, idx, cols)).join('');
@@ -130,7 +184,8 @@ function renderProtemoi(filtered, cols, tbody) {
         html += '<tr class="tier-drop-zone" data-tier="' + tierName + '">' +
           '<td colspan="' + (cols.length + 3) + '" class="drop-zone-cell">Drop rows here</td></tr>';
       } else {
-        html += group.map((row, idx) => renderRow(row, idx, cols)).join('');
+        var sorted = sortFilteredRows(group);
+        html += sorted.map((row, idx) => renderRow(row, idx, cols)).join('');
       }
     }
   });
@@ -338,7 +393,7 @@ async function handleDrop(e) {
   const tierTarget = e.target.closest('.tier-header-row, .tier-drop-zone');
   if (tierTarget && activeTab === 'protemoi') {
     const newTier = tierTarget.dataset.tier;
-     if (newTier && newTier !== srcRow.tier) {
+    if (newTier && newTier !== srcRow.tier) {
       srcRow.tier = newTier;
       try {
         await db.updateContact(srcRow.id, { tier: newTier });
@@ -430,7 +485,7 @@ async function toggleHide(id) {
     showToast(newHidden ? 'Row hidden' : 'Row visible');
   } catch (err) {
     console.error('Toggle hide failed:', err);
-    row.hidden = !newHiddenn;
+    row.hidden = !newHidden;
     renderTableBody();
     updateCounts();
   }
@@ -511,6 +566,12 @@ function bindGlobalEvents() {
     if (cell && !cell.classList.contains('cell-editing')) {
       startEdit(cell.dataset.id, cell.dataset.key);
     }
+  });
+
+  // Column header sort clicks
+  document.getElementById('table-head').addEventListener('click', e => {
+    const th = e.target.closest('th[data-sort-key]');
+    if (th) handleSort(th.dataset.sortKey);
   });
 
   // Search
