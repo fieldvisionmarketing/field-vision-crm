@@ -45,7 +45,7 @@ export const TAB_COLUMNS = {
     { key: 'contact_name', label: 'Role', type: 'text', width: '160px' },
     { key: 'linkedin_url', label: 'LinkedIn', type: 'link', width: '60px' },
     { key: 'tier', label: 'Tier', type: 'select', width: '130px',
-      options: ['Tier One', 'Tier Two', 'Keeping Warm', 'Up Next', 'Shelved'] },
+      options: ['Tier One', 'Tier Two', 'Tier Three', 'Up Next', 'Keeping Warm', 'Paused'] },
     { key: 'date_of_last_contact', label: 'DOLC', type: 'date', width: '110px' },
     { key: 'notes', label: 'Notes', type: 'text', width: '280px' },
   ],
