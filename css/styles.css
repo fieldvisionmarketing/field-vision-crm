@@ -429,6 +429,31 @@ tr.drop-below td {
   background: var(--bg-surface);
 }
 
+/* -- Tier drop targets -- */
+.tier-header-row.drop-target td {
+  background: var(--accent-green);
+  color: var(--bg);
+}
+
+.tier-empty td {
+  color: var(--text-dim);
+}
+
+.drop-zone-cell {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 12px;
+  border: 1px dashed var(--border);
+}
+
+.tier-drop-zone.drop-target .drop-zone-cell {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.05);
+}
+
 /* --Loading --*/
 .loading-cell {
   text-align: center;
