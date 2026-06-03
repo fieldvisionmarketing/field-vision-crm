@@ -228,11 +228,44 @@ tr[data-id] {
 }
 
 .row-num {
+  position: relative;
   color: var(--text-dim);
   font-size: 11px;
   text-align: center;
   width: 36px;
   min-width: 36px;
+}
+
+/* -- Row Flags -- */
+.flag-toggle {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  cursor: pointer;
+  font-size: 9px;
+  line-height: 1;
+  opacity: 0;
+  color: var(--text-dim);
+  transition: opacity 0.15s, color 0.15s;
+  padding: 2px;
+}
+
+tr:hover .flag-toggle {
+  opacity: 0.3;
+}
+
+tr:hover .flag-toggle:hover {
+  opacity: 0.8;
+  color: var(--orange);
+}
+
+.flag-toggle.flagged {
+  opacity: 1 !important;
+  color: var(--orange);
+}
+
+.row-flagged > td:first-child {
+  box-shadow: inset 3px 0 0 var(--orange);
 }
 
 .row-actions-col {

@@ -10,12 +10,14 @@ let searchQuery = '';
 let editingCell = null; // { id, key }
 let saveTimeout = null;
 let dragSrcId = null;
+let flaggedIds = new Set();
 let collapsedTiers = {}; // { tierName: true/false }
 let sortCol = null;  // column key to sort by
 let sortDir = 0;     // 0 = default (sort_order), 1 = asc, -1 = desc
 
 // -- Init --
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadFlaggedIds();
   renderTabs();
   bindGlobalEvents();
   switchTab('bd');
@@ -206,10 +208,12 @@ function getTierForRow(tr) {
 // -- Render Single Row --
 function renderRow(row, idx, cols) {
   const hiddenClass = row.hidden ? 'row-hidden' : '';
+  const isFlagged = flaggedIds.has(row.id);
+  const flaggedClass = isFlagged ? 'row-flagged' : '';
 
-  return '<tr class="' + hiddenClass + '" data-id="' + row.id + '" draggable="true">' +
+  return '<tr class="' + hiddenClass + ' ' + flaggedClass + '" data-id="' + row.id + '" draggable="true">' +
     '<td class="drag-handle" title="Drag to reorder">&#9776;</td>' +
-    '<td class="row-num">' + (idx + 1) + '</td>' +
+    '<td class="row-num"><span class="flag-toggle' + (isFlagged ? ' flagged' : '') + '" data-flag-id="' + row.id + '" title="' + (isFlagged ? 'Clear flag' : 'Flag row') + '">&#9873;</span>' + (idx + 1) + '</td>' +
     cols.map(c => renderCell(row, c)).join('') +
     '<td class="row-actions">' +
       '<button class="btn-icon btn-hide" data-id="' + row.id + '" title="' + (row.hidden ? 'Unhide' : 'Hide') + '">' +
@@ -514,13 +518,49 @@ async function addNewRow() {
   }
 }
 
+// -- Flags --
+async function loadFlaggedIds() {
+  try {
+    const saved = await db.fetchPreference('flagged_contacts');
+    flaggedIds = new Set(saved || []);
+  } catch (err) {
+    console.error('Failed to load flags:', err);
+    flaggedIds = new Set();
+  }
+}
+
+async function toggleFlag(id) {
+  if (flaggedIds.has(id)) {
+    flaggedIds.delete(id);
+  } else {
+    flaggedIds.add(id);
+  }
+  renderTableBody();
+  updateCounts();
+  try {
+    await db.upsertPreference('flagged_contacts', [...flaggedIds]);
+    showToast(flaggedIds.has(id) ? 'Flagged' : 'Flag cleared');
+  } catch (err) {
+    console.error('Flag save failed:', err);
+    if (flaggedIds.has(id)) { flaggedIds.delete(id); } else { flaggedIds.add(id); }
+    renderTableBody();
+    updateCounts();
+    showToast('Flag save failed', true);
+  }
+}
+
 // -- Counts --
 function updateCounts() {
   const visible = rows.filter(r => !r.hidden).length;
   const hidden = rows.filter(r => r.hidden).length;
+  const flagged = rows.filter(r => flaggedIds.has(r.id) && !r.hidden).length;
   const total = rows.length;
   const dot = String.fromCharCode(183);
-  document.getElementById('row-count').textContent = visible + ' visible' + (hidden > 0 ? ' ' + dot + ' ' + hidden + ' hidden' : '') + ' ' + dot + ' ' + total + ' total';
+  var text = visible + ' visible';
+  if (flagged > 0) text += ' ' + dot + ' ' + flagged + ' flagged';
+  if (hidden > 0) text += ' ' + dot + ' ' + hidden + ' hidden';
+  text += ' ' + dot + ' ' + total + ' total';
+  document.getElementById('row-count').textContent = text;
 }
 
 // -- Event Binding --
@@ -542,6 +582,13 @@ function bindGlobalEvents() {
 
   // Cell clicks for editing + hide buttons + tier toggles
   tableBody.addEventListener('click', e => {
+    // Flag toggle
+    const flagEl = e.target.closest('.flag-toggle');
+    if (flagEl) {
+      toggleFlag(flagEl.dataset.flagId);
+      return;
+    }
+
     // Tier header toggle (collapsible)
     const tierRow = e.target.closest('.tier-header-row');
     if (tierRow) {
