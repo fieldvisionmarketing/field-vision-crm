@@ -16,8 +16,8 @@ let sortCol = null;  // column key to sort by
 let sortDir = 0;     // 0 = default (sort_order), 1 = asc, -1 = desc
 
 // -- Init --
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadFlaggedIds();
+document.addEventListener('DOMContentLoaded', () => {
+  loadFlaggedIds();
   renderTabs();
   bindGlobalEvents();
   switchTab('bd');
@@ -518,18 +518,18 @@ async function addNewRow() {
   }
 }
 
-// -- Flags --
-async function loadFlaggedIds() {
+// -- Flags (localStorage) --
+function loadFlaggedIds() {
   try {
-    const saved = await db.fetchPreference('flagged_contacts');
-    flaggedIds = new Set(saved || []);
+    const saved = localStorage.getItem('crm_flagged_contacts');
+    flaggedIds = new Set(saved ? JSON.parse(saved) : []);
   } catch (err) {
     console.error('Failed to load flags:', err);
     flaggedIds = new Set();
   }
 }
 
-async function toggleFlag(id) {
+function toggleFlag(id) {
   if (flaggedIds.has(id)) {
     flaggedIds.delete(id);
   } else {
@@ -537,16 +537,8 @@ async function toggleFlag(id) {
   }
   renderTableBody();
   updateCounts();
-  try {
-    await db.upsertPreference('flagged_contacts', [...flaggedIds]);
-    showToast(flaggedIds.has(id) ? 'Flagged' : 'Flag cleared');
-  } catch (err) {
-    console.error('Flag save failed:', err);
-    if (flaggedIds.has(id)) { flaggedIds.delete(id); } else { flaggedIds.add(id); }
-    renderTableBody();
-    updateCounts();
-    showToast('Flag save failed', true);
-  }
+  localStorage.setItem('crm_flagged_contacts', JSON.stringify([...flaggedIds]));
+  showToast(flaggedIds.has(id) ? 'Flagged' : 'Flag cleared');
 }
 
 // -- Counts --
