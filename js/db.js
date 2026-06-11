@@ -8,15 +8,44 @@ const headers = {
   'Prefer': 'return=representation',
 };
 
-async function request(path, options = {}) {
+// Network resilience: a stalled Supabase request (held open by the network
+// layer) would otherwise hang forever and wedge the table on "Loading...".
+// Abort after a timeout and retry transient failures with backoff so the
+// request self-heals instead of hanging.
+const REQUEST_TIMEOUT_MS = 12000; // abort a request that hasn't responded in 12s
+const MAX_ATTEMPTS = 3;           // total tries before giving up
+
+async function request(path, options = {}, attempt = 1) {
   const url = `${SUPABASE_URL}${path}`;
-  const resp = await fetch(url, { headers, ...options });
-  if (!resp.ok) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, { headers, signal: controller.signal, ...options });
+    clearTimeout(timer);
+    if (!resp.ok) {
+      const text = await resp.text();
+      // Retry transient server errors (5xx); surface client errors (4xx) immediately.
+      if (resp.status >= 500 && attempt < MAX_ATTEMPTS) {
+        await new Promise(r => setTimeout(r, 500 * 2 ** (attempt - 1)));
+        return request(path, options, attempt + 1);
+      }
+      throw new Error(`DB error ${resp.status}: ${text}`);
+    }
     const text = await resp.text();
-    throw new Error(`DB error ${resp.status}: ${text}`);
+    return text ? JSON.parse(text) : null;
+  } catch (err) {
+    clearTimeout(timer);
+    // Retry timeouts (AbortError) and network failures (TypeError from fetch).
+    const retriable = err.name === 'AbortError' || err instanceof TypeError;
+    if (retriable && attempt < MAX_ATTEMPTS) {
+      await new Promise(r => setTimeout(r, 500 * 2 ** (attempt - 1)));
+      return request(path, options, attempt + 1);
+    }
+    if (err.name === 'AbortError') {
+      throw new Error(`DB request timed out after ${REQUEST_TIMEOUT_MS}ms and ${MAX_ATTEMPTS} attempts: ${path}`);
+    }
+    throw err;
   }
-  const text = await resp.text();
-  return text ? JSON.parse(text) : null;
 }
 
 // ââ Contacts ââ
