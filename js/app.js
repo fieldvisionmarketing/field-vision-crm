@@ -262,7 +262,7 @@ function renderCell(row, col) {
     }
     const display = value ? formatDate(value) : '-';
     const age = value ? getDaysSince(value) : null;
-    const ageClass = age !== null ? (age > 30 ? 'date-stale' : age > 14 ? 'date-aging' : 'date-fresh') : '';
+    const ageClass = (age !== null && col.key !== 'date_initiated') ? (age > 30 ? 'date-stale' : age > 14 ? 'date-aging' : 'date-fresh') : '';
     return '<td class="cell-date-display ' + ageClass + '" data-id="' + row.id + '" data-key="' + col.key + '">' + display + '</td>';
   }
 
