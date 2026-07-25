@@ -266,6 +266,20 @@ function renderCell(row, col) {
     return '<td class="cell-date-display ' + ageClass + '" data-id="' + row.id + '" data-key="' + col.key + '">' + display + '</td>';
   }
 
+  // Notelog: expandable running-notes cell (opens modal, no inline editing)
+  if (col.type === 'notelog') {
+    const lines = value ? String(value).split('\n').map(s => s.trim()).filter(Boolean) : [];
+    // Preview the most recent entry (last non-empty line) so the cell shows current status at a glance.
+    const latest = lines.length ? lines[lines.length - 1] : '';
+    const truncated = latest.length > 60 ? latest.substring(0, 57) + '...' : latest;
+    const inner = truncated ? escapeHtml(truncated) : '<span class="cell-placeholder">-</span>';
+    const badge = lines.length > 1 ? '<span class="note-count" title="' + lines.length + ' notes">' + lines.length + '</span>' : '';
+    const fullTitle = lines.length ? escapeAttr(value) : 'Click to add notes';
+    return '<td class="cell-note" data-id="' + row.id + '" data-key="' + col.key + '" title="' + fullTitle + '">' +
+      '<span class="note-preview">' + inner + '</span>' + badge +
+      '<span class="note-expand">&#9998;</span></td>';
+  }
+
   // Text
   if (isEditing) {
     return '<td class="cell-editing"><input type="text" class="cell-input" value="' + escapeAttr(value || '') + '" data-id="' + row.id + '" data-key="' + col.key + '" onblur="window._saveAndClose(this)" onkeydown="if(event.key===\'Enter\')this.blur();if(event.key===\'Escape\'){window._cancelEdit();}" autofocus></td>';
@@ -603,8 +617,27 @@ function bindGlobalEvents() {
     // Cell clicks for editing
     const cell = e.target.closest('td[data-id][data-key]');
     if (cell && !cell.classList.contains('cell-editing')) {
-      startEdit(cell.dataset.id, cell.dataset.key);
+      if (cell.classList.contains('cell-note')) {
+        openNoteModal(cell.dataset.id, cell.dataset.key);
+      } else {
+        startEdit(cell.dataset.id, cell.dataset.key);
+      }
     }
+  });
+
+  // Note modal events
+  const noteTa = document.getElementById('note-textarea');
+  noteTa.addEventListener('input', noteAutosave);
+  noteTa.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      closeNoteModal();
+    }
+  });
+  document.getElementById('note-close').addEventListener('click', closeNoteModal);
+  document.getElementById('note-insert-date').addEventListener('click', insertTodayDate);
+  document.getElementById('note-modal').addEventListener('click', e => {
+    if (e.target.id === 'note-modal') closeNoteModal();
   });
 
   // Column header sort clicks
@@ -634,11 +667,104 @@ function bindGlobalEvents() {
 
   // Keyboard shortcuts
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && noteModalCtx) {
+      closeNoteModal();
+      return;
+    }
     if (e.key === 'Escape' && editingCell) {
       editingCell = null;
       renderTableBody();
     }
   });
+}
+
+// -- Note Editor Modal --
+let noteModalCtx = null;   // { id, key }
+let noteDirty = false;
+let noteSaveTimer = null;
+
+function openNoteModal(id, key) {
+  const row = rows.find(r => r.id === id);
+  if (!row) return;
+  noteModalCtx = { id, key };
+  noteDirty = false;
+  const modal = document.getElementById('note-modal');
+  const ta = document.getElementById('note-textarea');
+  const title = document.getElementById('note-modal-title');
+  const name = row.company || row.contact_name || 'Notes';
+  title.textContent = name;
+  ta.value = row[key] || '';
+  document.getElementById('note-status').textContent = '';
+  modal.classList.add('open');
+  setTimeout(() => {
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }, 20);
+}
+
+function noteAutosave() {
+  if (!noteModalCtx) return;
+  const ta = document.getElementById('note-textarea');
+  const value = ta.value;
+  const { id, key } = noteModalCtx;
+  const row = rows.find(r => r.id === id);
+  if (row) row[key] = value;
+  noteDirty = true;
+  document.getElementById('note-status').textContent = 'Saving…';
+  clearTimeout(noteSaveTimer);
+  noteSaveTimer = setTimeout(async () => {
+    // Guard: only apply this result if we're still editing the same note.
+    const ctxAtSave = noteModalCtx;
+    try {
+      await db.updateContact(id, { [key]: value || null });
+      noteDirty = false;
+      if (noteModalCtx && noteModalCtx.id === id && noteModalCtx.key === key) {
+        document.getElementById('note-status').textContent = 'Saved';
+      }
+    } catch (err) {
+      console.error('Note save failed:', err);
+      if (ctxAtSave && noteModalCtx && noteModalCtx.id === id) {
+        document.getElementById('note-status').textContent = 'Save failed — will retry on close';
+      }
+    }
+  }, 700);
+}
+
+async function closeNoteModal() {
+  const ctx = noteModalCtx;
+  document.getElementById('note-modal').classList.remove('open');
+  noteModalCtx = null;
+  clearTimeout(noteSaveTimer);
+  if (ctx && noteDirty) {
+    const ta = document.getElementById('note-textarea');
+    const value = ta.value;
+    const row = rows.find(r => r.id === ctx.id);
+    if (row) row[ctx.key] = value;
+    try {
+      await db.updateContact(ctx.id, { [ctx.key]: value || null });
+      showToast('Notes saved');
+    } catch (err) {
+      console.error('Note save failed:', err);
+      showToast('Note save failed!', true);
+    }
+  }
+  noteDirty = false;
+  renderTableBody();
+}
+
+function insertTodayDate() {
+  const ta = document.getElementById('note-textarea');
+  const now = new Date();
+  const stamp = (now.getMonth() + 1) + '/' + now.getDate();
+  const before = ta.value.substring(0, ta.selectionStart);
+  const after = ta.value.substring(ta.selectionEnd);
+  let insert = stamp + ' - ';
+  if (before.length > 0 && !before.endsWith('\n')) insert = '\n' + insert;
+  ta.value = before + insert + after;
+  const pos = (before + insert).length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+  noteAutosave();
 }
 
 // -- Utilities --

@@ -49,6 +49,22 @@
       <div class="toast" id="toast"></div>
     </div>
 
+    <!-- Note Editor Modal -->
+    <div class="note-modal" id="note-modal">
+      <div class="note-modal-box">
+        <div class="note-modal-header">
+          <div class="note-modal-title" id="note-modal-title">Notes</div>
+          <button class="btn note-done-btn" id="note-close" title="Close (Esc)">Done</button>
+        </div>
+        <textarea class="note-textarea" id="note-textarea" spellcheck="true" placeholder="Running notes for this contact. Click &quot;+ Date&quot; to stamp a new line, e.g.&#10;7/24 - had a call, sending lead magnet next week"></textarea>
+        <div class="note-modal-footer">
+          <button class="btn" id="note-insert-date" title="Insert today's date on a new line">+ Date</button>
+          <span class="note-status" id="note-status"></span>
+          <span class="note-hint">Saves automatically &middot; &#8984;/Ctrl+Enter to close</span>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
